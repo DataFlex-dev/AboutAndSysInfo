@@ -1,0 +1,28 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetDoubleClickTime.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetDoubleClickTime
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, June, 4th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+External_Function WinAPI_GetDoubleClickTime "GetDoubleClickTime" User32.Dll Returns Integer
+
+Function GetDoubleClickTime Desktop Returns UInteger
+    UInteger uiTime
+    
+    Move (WinAPI_GetDoubleClickTime ()) To uiTime
+    
+    Function_Return uiTime
+End_Function

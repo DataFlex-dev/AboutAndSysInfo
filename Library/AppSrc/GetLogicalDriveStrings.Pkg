@@ -1,0 +1,32 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetLogicalDriveStrings.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetLogicalDriveStrings
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, June, 4th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+External_Function WinAPI_GetLogicalDriveStrings "GetLogicalDriveStringsW" Kernel32.Dll DWord nBufferLength Pointer lpBuffer Returns Integer
+
+Function GetLogicalDriveStrings Desktop Returns String
+    WString wsLogicalDrivesString
+    Integer iLength
+
+    Move (ZeroString (255)) to wsLogicalDrivesString
+
+    Move (WinAPI_GetLogicalDriveStrings (255, AddressOf (wsLogicalDrivesString))) to iLength
+
+    Function_Return (Left (wsLogicalDrivesString, iLength))
+End_Function
+

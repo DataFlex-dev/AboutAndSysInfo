@@ -1,0 +1,36 @@
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GlobalMemoryStatus.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GlobalMemoryStatus. When used
+//      the program needs to create a variable to hold the structure
+//      information and pass this variable to the function call.
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, May, 26th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#IFNDEF _STRUCT_tWinMemoryStatusEx
+Struct tWinMemoryStatusEx
+    UInteger dwLength                
+    UInteger dwMemoryLoad          
+    UBigInt ullTotalPhys           
+    UBigInt ullAvailPhys           
+    UBigInt ullTotalPageFile       
+    UBigInt ullAvailPageFile       
+    UBigInt ullTotalVirtual        
+    UBigInt ullAvailVirtual        
+    UBigInt ullAvailExtendedVirtual
+End_Struct
+#ENDIF
+
+External_Function GlobalMemoryStatusEx "GlobalMemoryStatusEx" Kernel32.Dll Pointer lpMemoryStatus Returns Integer

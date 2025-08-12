@@ -1,0 +1,41 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      PathFindExtension.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function PathFindExtension.
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, May, 26th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+External_Function WinAPI_PathFindExtension "PathFindExtensionW" SHLWAPI.DLL Pointer lpszPath Returns Pointer
+
+//=============================================================================
+// Searches a path for a file extension.
+//
+// Returns the extension of the filename in the passed path
+//    Example:
+//       In: c:\DataFlex\bin\dbexplor.exe
+//       Out: .exe
+//
+// Parameters:
+//      sPath - Path that contains the extension for which to search.
+//=============================================================================
+Function PathFindExtension Desktop WString wsPath Returns String
+    String sRetVal
+    Pointer pExtension
+
+    Move (WinAPI_PathFindExtension (AddressOf (wsPath))) to pExtension
+    Move (PointerToWstring (pExtension)) to sRetVal
+
+    Function_Return (Trim (sRetVal))
+End_Function

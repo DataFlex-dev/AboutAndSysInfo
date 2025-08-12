@@ -1,0 +1,32 @@
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetCurrentProcessId.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetCurrentProcessId.
+//
+// Author:
+//      Ulbe Stellema, Vincent Oorsprong
+//
+// Date:
+//      2002, June, 29th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+External_Function WinAPI_GetCurrentProcessId "GetCurrentProcessId" Kernel32.Dll Returns Integer
+
+Function GetApplicationCurrentProcessId Desktop Returns DWord
+    Dword dwProcessId
+    Integer iVoid
+
+    Move (WinAPI_GetCurrentProcessId ()) to dwProcessId
+    If (dwProcessId = 0) Begin
+        Get ShowLastError To iVoid
+    End
+
+    Function_Return dwProcessId
+End_Function

@@ -1,0 +1,40 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetKeyboardType.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetKeyboardType.
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, May, 26th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Define Keyboard_Type               For 0
+Define Keyboard_Subtype            For 1
+Define Keyboard_Function_Key_Count For 2
+
+Define IBM_PC_XT_Or_Compatible_Keyboard For 1
+Define Olivetti_ICO_Keyboard            For 2
+Define IBM_PC_AT_Or_Similar_Keyboard    For 3
+Define IBM_Enhanced_Keyboard            For 4
+Define Nokia_1050_And_Similar_Keyboards For 5
+Define Nokia_9140_And_Similar_Keyboards For 6
+Define Japanese_Keyboard                For 7
+
+External_Function WinAPI_GetKeyboardType "GetKeyboardType" User32.Dll Integer iTypeFlag Returns Integer
+
+Function GetKeyboardType Desktop Integer iTypeFlag Returns Integer
+    Integer iKeyboardType
+    
+    Move (WinAPI_GetKeyboardType (iTypeFlag)) To iKeyboardType
+    
+    Function_Return iKeyboardType
+End_Function

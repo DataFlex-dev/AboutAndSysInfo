@@ -1,0 +1,45 @@
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      OpenProcess.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function OpenProcess.
+//
+// Author:
+//      Ulbe Stellema, Vincent Oorsprong
+//
+// Date:
+//      2002, June, 29th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Define PROCESS_TERMINATE         For |CI$0001
+Define PROCESS_CREATE_THREAD     For |CI$0002
+Define PROCESS_SET_SESSIONID     For |CI$0004
+Define PROCESS_VM_OPERATION      For |CI$0008
+Define PROCESS_VM_READ           For |CI$0010
+Define PROCESS_VM_WRITE          For |CI$0020
+Define PROCESS_DUP_HANDLE        For |CI$0040
+Define PROCESS_CREATE_PROCESS    For |CI$0080
+Define PROCESS_SET_QUOTA         For |CI$0100
+Define PROCESS_SET_INFORMATION   For |CI$0200
+Define PROCESS_QUERY_INFORMATION For |CI$0400
+Define PROCESS_ALL_ACCESS        For (STANDARD_RIGHTS_REQUIRED iOr SYNCHRONIZE iOr |CI$FFFF)
+
+External_Function WinAPI_OpenProcess "OpenProcess" Kernel32.Dll Dword dwDesiredAccess Boolean bInheritHandle Dword dwProcessId Returns Handle
+
+Function OpenProcess Desktop Dword dwAccess Dword dwProcessId Returns Handle
+    Handle hProcess
+    Integer iVoid
+
+    Move (WinAPI_OpenProcess (dwAccess, False, dwProcessId)) To hProcess
+    If (hProcess = 0) Begin
+        Get ShowLastError To iVoid
+    End
+
+    Function_Return hProcess
+End_Function // OpenProcess

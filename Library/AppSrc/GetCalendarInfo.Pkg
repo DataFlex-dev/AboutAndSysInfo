@@ -1,0 +1,83 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetCalendarInfo.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetCalendarInfo
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, July, 7th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Use SysInfo_Language.inc
+
+External_Function WinAPI_GetCalendarInfo "GetCalendarInfoW" Kernel32.Dll Integer iLocale Integer iCalendar Integer iCaltype Pointer lpCalData Integer cchData Pointer lpValue Returns Integer
+
+Define CAL_ITWODIGITYEARMAX For |CI$00000030  // two digit year max
+
+Function GetCalendarInfo Desktop Integer iLocale Integer iCalendar Integer iCaltype Returns String
+    Integer iRetval
+    WString wsCalData
+
+    Move (ZeroString (255)) to wsCalData
+
+    Move (WinAPI_GetCalendarInfo (iLocale, iCalendar, iCaltype, AddressOf (wsCalData), 255, 0)) to iRetval
+
+    Function_Return (CString (wsCalData))
+End_Function
+
+Function CalendarType2Descr Desktop Integer iCalendarType Returns String
+    String sCalendarType
+
+    Case Begin
+        Case (iCalendarType = 0)
+            Move C_$CalendarTypeNoAdditionalTypesValid To sCalendarType
+            Case Break
+        Case (iCalendarType = 1)
+            Move C_$CalendarTypeGregorianLocalized To sCalendarType
+            Case Break
+        Case (iCalendarType = 2)
+            Move C_$CalendarTypeGregorianEnglish To sCalendarType
+            Case Break
+        Case (iCalendarType = 3)
+            Move C_$CalendarTypeEraYearOfTheEmperorJapan To sCalendarType
+            Case Break
+        Case (iCalendarType = 4)
+            Move C_$CalendarTypeTaiwanCalendar To sCalendarType
+            Case Break
+        Case (iCalendarType = 5)
+            Move C_$CalendarTypeTangunEraKorea To sCalendarType
+            Case Break
+        Case (iCalendarType = 6)
+            Move C_$CalendarTypeHijriArabicLunar To sCalendarType
+            Case Break
+        Case (iCalendarType = 7)
+            Move C_$CalendarTypeThai To sCalendarType
+            Case Break
+        Case (iCalendarType = 8)
+            Move C_$CalendarTypeHebrewLunar To sCalendarType
+            Case Break
+        Case (iCalendarType = 9)
+            Move C_$CalendarTypeGregorianMiddleEastFrenchCalendar To sCalendarType
+            Case Break
+        Case (iCalendarType = 10)
+            Move C_$CalendarTypeGregorianArabicCalendar To sCalendarType
+            Case Break
+        Case (iCalendarType = 11)
+            Move C_$CalendarTypeGregorianTransliteratedEnglishCalendar To sCalendarType
+            Case Break
+        Case (iCalendarType = 12)
+            Move C_$CalendarTypeGregorianTransliteratedFrenchCalendar To sCalendarType
+            Case Break
+    Case End
+
+    Function_Return sCalendarType
+End_Function

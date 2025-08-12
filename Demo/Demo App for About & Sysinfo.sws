@@ -1,0 +1,11 @@
+[Properties]
+Version=25.0
+[WorkspacePaths]
+ConfigFile=.\Programs\Config.ws
+[Projects]
+Project0=Test.src
+[Conditionals]
+Is$WebApp=False
+Is$Win64=False
+[Libraries]
+Lib1=..\Library\About And SysInfo.sws

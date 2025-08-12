@@ -1,0 +1,32 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetSystemDirectory.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetSystemDirectory
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, June, 4th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+External_Function WinAPI_GetSystemDirectory "GetSystemDirectoryW" Kernel32.Dll Pointer lpBuffer UInteger uSize Returns Integer
+
+Define MAX_PATH For 260
+
+Function GetSystemDirectory Desktop Returns String
+    WString wsSystemDirectory
+    UInteger uiResult
+
+    Move (ZeroString (MAX_PATH)) to wsSystemDirectory
+    Move (WinAPI_GetSystemDirectory (AddressOf (wsSystemDirectory), MAX_PATH)) to uiResult
+
+    Function_Return (Cstring (wsSystemDirectory))
+End_Function

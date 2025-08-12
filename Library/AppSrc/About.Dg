@@ -1,0 +1,136 @@
+Use LanguageText.pkg
+
+Object oAboutDialog is a ModalPanel
+    Set Sysmenu_Icon to False
+    Set Minimize_Icon to False
+    Set Label to "About My Project"
+    Set Locate_Mode to Center_On_Parent
+    Set Size to 96 243
+    Set piMinSize to 96 217
+    Set TextColor to clBlue
+
+    // Replace the "SysInfoDialog.Dg" in the following line with the filename you want
+    // to use for systeminformation when you have made a different one. Don't forget
+    // to do check and/or change the name of the object inside the procedure OnClick
+    // of the oSysInfoButton object.
+    Use SysInfoDialog.Dg
+
+    Object oAboutBitmap is a Container3d
+        Set Size to 38 39
+        Set Location to 4 5
+        Set Bitmap to "DacAbout.bmp"
+        Set Border_Style to Border_StaticEdge
+    End_Object
+
+    Object oProgramText is a Textbox
+        Set Label to "Project Name (auto replaced)"
+        Set TextColor to clBlue
+        Set Location to 4 62
+        Set Size to 10 93
+        Set FontUnderline to True
+        
+        Procedure Activating Returns Integer
+            Integer iRetval
+            String sProgramName
+            
+            Forward Get Msg_Activating to iRetval
+            If (iRetval = 0) Begin
+                Get psProgram of ghoApplication to sProgramName
+                Set Label to sProgramName
+            End
+        End_Procedure
+    End_Object
+
+    Object oCopyrightText is a Textbox
+        Set Label to "(c) Copyright (auto replaced)"
+        Set TextColor to clBlue
+        Set Location to 49 62
+        Set Size to 13 191
+        
+        Procedure Activating Returns Integer
+            Integer iRetval iYear
+            String sCompanyName
+            
+            Forward Get Msg_Activating to iRetval
+            If (iRetval = 0) Begin
+                Get psCompany of ghoApplication to sCompanyName
+                Move (DateGetYear (CurrentDateTime ())) to iYear
+                Set Value to (Sformat ("(c) Copyright %1 %2", iYear, sCompanyName))
+            End
+        End_Procedure
+    End_Object
+
+    Object oVersionText is a Textbox
+        Set Label to "Version (Auto replaced)"
+        Set Auto_Size_State to FALSE
+        Set Location to 19 62
+        Set Size to 13 191
+
+        Procedure Activating
+            Forward Send Activating
+        
+            Send DoShowVersionInfo
+        End_Procedure
+        
+        Procedure DoShowVersionInfo
+            Integer hoVersionInfo iVersionMajor iVersionMinor iVersionRelease iVersionBuild
+            Boolean bIncluded
+        
+            Set Label To C_$VERSION
+        
+            If (ghoApplication <> 0) Begin
+                Get phoVersionInfo Of ghoApplication To hoVersionInfo
+                If (hoVersionInfo <> 0) Begin
+                    Get pbIncluded Of hoVersionInfo To bIncluded
+                    If (bIncluded) Begin
+                        Get piVersionMajor Of hoVersionInfo To iVersionMajor
+                        Get piVersionMinor Of hoVersionInfo To iVersionMinor
+                        Get piVersionRelease Of hoVersionInfo To iVersionRelease
+                        Get piVersionBuild Of hoVersionInfo To iVersionBuild
+                        Set Label To (SFormat (C_$VERSION + ": %1.%2.%3.%4", iVersionMajor, iVersionMinor, iVersionRelease, iVersionBuild))
+                    End
+                End
+            End
+        End_Procedure
+    End_Object
+
+    Object oAuthorText is a Textbox
+        Set Label to "Author: Data Access Worldwide"
+        Set Auto_Size_State to False
+        Set Location to 34 62
+        Set Size to 13 191
+    End_Object
+
+    Object oSysInfoButton is a Button
+        Set Label to "&System info"
+        Set Location to 77 135
+
+        // Activate the system information dialog so that people can explore the
+        // values
+        Procedure OnClick
+            Send Popup_Modal Of oSystemInformationDialog
+        End_Procedure
+    End_Object
+
+    Object oOkButton is a Button
+        Set Label to "&OK"
+        Set Location to 77 190
+        Set Default_State to TRUE
+
+        // Just close the panel
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+    End_Object
+
+    // Tell the object what to do if the following keys are pressed.
+    On_Key kCancel Send KeyAction Of oOkButton
+    On_Key Key_Alt+Key_O Send KeyAction Of oOkButton
+    On_Key Key_Alt+Key_S Send KeyAction Of oSysInfoButton
+End_Object
+
+// This method name is send from the HELPA_PM.INC file when the about
+// option is selected
+Procedure Activate_About
+    Send Popup_Modal Of oAboutDialog
+End_Procedure

@@ -1,21 +1,47 @@
-# Library Template
+# AboutAndSysInfo Library
+
+The AboutAndSysInfo library enhances your project About dialog enabling you to add a dialog that contains the project name, which comes from your application object, the version information from the executable and a very much extended and organized system information dialog. A user can pretty much find all system information related to the application in a treeview style view.
+
+###### How to use? 
+
+Simply add the library to your workspace and add the about.dg to the project code and the rest is handled for you.
+
+## Features
+The library includes the following MSDN Windows API wrapped functions:
+
+- CloseHandle
+- EnumProcessModules
+- GetAllUsersProfileDirectory
+- GetCalendarInfo
+- GetComputerName
+- GetApplicationCurrentProcessId
+- GetDefaultUserProfileDirectory
+- GetDoubleClickTime
+- GetDriveType
+- GetKeyboardLayoutName
+- GetKeyboardType
+- GetLogicalDriveStrings
+- GetLongPathName
+- GetProfilesDirectory
+- GetShortPathName
+- GetSystemDirectory
+- GetTempPath
+- GetUserDefaultLangID
+- GetUserName
+- GlobalMemoryStatusEx
+- OpenProcess
+- PathFindExtension
+- PathIsDirectory
 
 ---
 
 ## Library Information
 
-This repository is a template for developing DataFlex Libraries. The `Library` directory should contain the library, and the `Demo` directory should be a demo workspace that uses the library. (Optional) the `help` directory can be used for documentation and release notes.
+This repository contains a Library directory where the source for the AboutAndSysInfo library is, and the Demo directory where you can find a demo workspace that uses the library.
 
-###### External Components
-
-If applicable, list the external components used in the table below:
-
-| Component | Version |
-| --------- | ------- |
-|           |         |
 
 ## General Information
 
 | Product  | Version           |
 | -------- | ----------------- |
-| DataFlex | 23.0, 24.0, 25.0  |
+| DataFlex | 25.0  |

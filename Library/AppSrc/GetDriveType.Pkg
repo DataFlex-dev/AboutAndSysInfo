@@ -1,0 +1,68 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetDriveType.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetDriveType
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, June, 4th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Use SysInfo_Language.inc
+
+Define DRIVE_UNKNOWN     For 0
+Define DRIVE_NO_ROOT_DIR For 1
+Define DRIVE_REMOVABLE   For 2
+Define DRIVE_FIXED       For 3
+Define DRIVE_REMOTE      For 4
+Define DRIVE_CDROM       For 5
+Define DRIVE_RAMDISK     For 6
+
+External_Function WinAPI_GetDriveType "GetDriveTypeW" Kernel32.Dll Pointer lpRootPathName Returns Integer
+
+Function GetDriveType Desktop WString wsRootPathName Returns String
+    Integer iRetval
+
+    Move (WinAPI_GetDriveType (AddressOf (wsRootPathName))) to iRetval
+   
+    Function_Return iRetval
+End_Function
+
+Function DriveType2Descr Desktop Integer iDriveType Returns String
+    String sDriveType
+    
+    Case Begin
+        Case (iDriveType = DRIVE_UNKNOWN)
+            Move C_$DriveTypeCannotDetermined To sDriveType
+            Case Break
+        Case (iDriveType = DRIVE_NO_ROOT_DIR)
+            Move C_$DriveTypeRootPathIsInvalid To sDriveType
+            Case Break
+        Case (iDriveType = DRIVE_REMOVABLE)
+            Move C_$DriveTypeDiskCanBeRemoved To sDriveType
+            Case Break
+        Case (iDriveType = DRIVE_FIXED)
+            Move C_$DriveTypeDiskCannotBeRemoved To sDriveType
+            Case Break
+        Case (iDriveType = DRIVE_REMOTE)
+            Move C_$DriveTypeDriveIsARemoteDrive To sDriveType
+            Case Break
+        Case (iDriveType = DRIVE_CDROM)
+            Move C_$DriveTypeDriveIsACDRomDrive To sDriveType
+            Case Break
+        Case (iDriveType = DRIVE_RAMDISK)
+            Move C_$DriveTypeDriveIsARAMDisk To sDriveType
+            Case Break
+    Case End
+    
+    Function_Return sDriveType
+End_Function

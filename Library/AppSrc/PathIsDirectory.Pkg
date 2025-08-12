@@ -1,0 +1,36 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      PathIsDirectory.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function PathIsDirectory.
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, May, 29th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+External_Function WinAPI_PathIsDirectory "PathIsDirectoryW" SHLWAPI.DLL Pointer lpszPath Returns Integer
+
+//=============================================================================
+// Verifies that a path is a valid directory.
+//
+// Returns TRUE if the path is a valid directory, or FALSE otherwise.
+//
+// Parameters:
+//      sPath - Address of the path to verify.
+//=============================================================================
+Function PathIsDirectory Desktop WString wsPath Returns Integer
+    Boolean bRetVal
+
+    Move (WinAPI_PathIsDirectory (AddressOf (wsPath))) to bRetVal
+
+    Function_Return bRetVal
+End_Function

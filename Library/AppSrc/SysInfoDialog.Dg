@@ -1,0 +1,2650 @@
+﻿Use SysInfo_Language.inc
+
+Load_Driver "MSSQLDRV"
+
+Use cVersionInfo.Pkg                    // Version Information functions
+Use GetUserName.Pkg                     // GetUserName WinAPI function definition
+Use PathFindExtension.Pkg               // PathFindExtension WinAPI function definition
+Use PathIsDirectory.Pkg                 // PathIsDirectory WinAPI function definition
+Use Seq_Chnl.Pkg                        // Sequential channel functions
+Use FleXML.Pkg                          // Interface to XML
+Use GlobalMemoryStatus.Pkg              // GlobalMemoryStatus WinAPI function definition
+Use GetKeyboardType.Pkg                 // GetKeyboardType WinAPI function definition
+Use GetKeyboardLayoutName.Pkg           // GetKeyboardLayoutName WinAPI function definition
+Use GetUserDefaultLangID.Pkg            // GetUserDefaultLangID WinAPI function definition
+Use WindowsLocale.Pkg                   // Functions to get various Windows locale information
+Use GetSystemDirectory.Pkg              // GetSystemDirectory WinAPI function definition
+Use GetTempPath.Pkg                     // GetTempPath WinAPI function definition
+Use GetProfilesDirectory.Pkg            // GetProfilesDirectory WinAPI function definition
+Use GetAllUsersProfileDirectory.Pkg     // GetAllUsersProfileDirectory WinAPI function definition
+Use GetDefaultUserProfileDirectory.Pkg  // GetDefaultUserProfileDirectory WinAPI function definition
+Use GetShortPathName.Pkg                // GetShortPathName WinAPI function definition
+Use GetLongPathName.Pkg                 // GetLongPathName WinAPI function definition
+Use GetComputerName.Pkg                 // GetComputerName WinAPI function definition
+Use GetDoubleClickTime.Pkg              // GetDoubleClickTime WinAPI function definition
+Use GetLogicalDriveStrings.Pkg          // GetLogicalDriveStrings WinAPI function definition
+Use GetDriveType.Pkg                    // GetDriveType WinAPI function definition
+Use GetCalendarInfo.Pkg                 // GetCalendarInfo WinAPI function definition
+Use EnumProcessModules.Pkg              // Functions to enumerate the process modules
+Use WinShell.Pkg                        // Path Functions; PathRemoveFileSpec, PathRemoveExtension, PathIsRelative, PathFileExists
+Use DfTreeVw.pkg                        // Treeview control
+Use MSSqldrv.pkg
+Use DFBTRDRV.PKG
+
+Object oSystemInformationDialog is a ModalPanel
+    Set Border_Style to Border_Thick
+    Set Label to C_$SystemInfo
+    Set Size to 173 335
+    Set Location to 7 43
+    Set Locate_Mode to CENTER_ON_SCREEN
+
+    Object oSystemInfoImageList is a cImageList32
+        Set Location to 26 147
+        Set piMaxImages to 3
+
+        // Define three values to point to the loaded bitmaps
+        Enum_List
+            Define tvSysInfoBookOpenBmp
+            Define tvSysInfoBookClosedBmp
+            Define tvSysInfoItemBmp
+        End_Enum_List
+
+        // When the imagelist is being created we need to load the bitmaps used
+        Procedure OnCreate
+            Integer iVoid
+
+            Get AddImage "FolderOpen.Ico" to iVoid
+            Get AddImage "Folder.Ico" to iVoid
+            Get AddImage "Item.Ico" to iVoid
+        End_Procedure
+    End_Object
+
+    Object oSystemInfoTreeView is a TreeView
+        Set peAnchors to anAll
+        Set Size to 149 327
+        Set Location to 5 5
+
+        // Connect the imagelist object to this treeview
+        Set ImageListObject to oSystemInfoImageList
+
+        // Keep a property that holds the current root underwhich new treeview items are created
+        Property Handle phCurrentRoot
+
+        // Create a list of information branch and item specific identifiers
+        Enum_List
+            Define tiSysInfoUserBranch
+            Define tiSysInfoUserBranchItem
+            Define tiSysWindowsLocaleBranch
+            Define tiSysWindowsLocaleBranchItem
+            Define tiSysInfoDataBaseDriversBranch
+            Define tiSysInfoDataBaseDriversBranchItem
+            Define tiSysInfoDataBaseDriverItem
+            Define tiSysInfoVersionBranch
+            Define tiSysInfoVersionBranchItem
+            Define tiSysInfoVersionsOfBinDirBranch
+            Define tiSysInfoVersionsEnumeratedModulesDirBranch
+            Define tiSysInfoWorkSpaceBranch
+            Define tiSysInfoWorkSpaceBranchItem
+            Define tiSysInfoMemoryBranch
+            Define tiSysInfoMemoryBranchItem
+            Define tiSysInfoFilesDirBranch
+            Define tiSysInfoFilesDirBranchItem
+            Define tiSysInfoKeyboardBranch
+            Define tiSysInfoKeyboardBranchItem
+            Define tiSysInfoAccKeysBranch
+            Define tiSysInfoAccKeysBranchItem
+            Define tiSysInfoRegistrationBranch
+            Define tiSysInfoRegistrationBranchItem
+            Define tiSysInfoDataBaseServersBranch
+            Define tiSysInfoDataBaseServersBranchItem
+            Define tiSysInfoGlobalAttributesBranch
+            Define tiSysInfoGlobalAttributesBranchItem
+            Define tiSysInfoGlobalVariablesBranch
+            Define tiSysInfoGlobalVariablesBranchItem
+            Define tiSysInfoSystemMetricsBranch
+            Define tiSysInfoSystemMetricsBranchItem
+            Define tiSysInfoSysConfBranch
+            Define tiSysInfoSysConfBranchItem
+            Define tiSysInfoDataFilesBranch
+            Define tiSysInfoDataFilesFilesBranch
+            Define tiSysInfoDataFilesAttributesBranch
+            Define tiSysInfoDataFilesFieldsBranch
+            Define tiSysInfoDataFilesIndexesBranch
+            Define tiSysInfoDataFilesBranchItem
+            Define tiSysInfoApplicationBranch
+            Define tiSysInfoApplicationBranchItem
+            Define tiSysInfoWindowsCurDirBranch
+            Define tiSysInfoWindowsCurDirBranchItem
+            Define tiSysInfoWindowsDirBranch
+            Define tiSysInfoWindowsDirBranchItem
+            Define tiSysInfoSystemDirBranch
+            Define tiSysInfoSystemDirBranchItem
+            Define tiSysInfoTempPathDirBranch
+            Define tiSysInfoTempPathDirBranchItem
+            Define tiSysInfoProfilesDirBranch
+            Define tiSysInfoProfilesDirBranchItem
+            Define tiSysInfoAllUsersProfilesDirBranch
+            Define tiSysInfoAllUsersProfilesDirBranchItem
+            Define tiSysInfoDefaultUsersProfilesDirBranch
+            Define tiSysInfoDefaultUsersProfilesDirBranchItem
+            Define tiSysInfoCurrentFileListCfgDirBranch
+            Define tiSysInfoCurrentFileListCfgDirBranchItem
+            Define tiSysInfoLogicalDrivesBranch
+            Define tiSysInfoLogicalDrivesBranchItem
+            Define tiSysInfoWinLocaleNumberInfoBranch
+            Define tiSysInfoWinLocaleNumberInfoBranchItem
+            Define tiSysInfoWinLocaleLanguageInfoBranch
+            Define tiSysInfoWinLocaleLanguageInfoBranchItem
+            Define tiSysInfoWinLocaleCurrencyInfoBranch
+            Define tiSysInfoWinLocaleCurrencyInfoBranchItem
+            Define tiSysInfoWinLocaleTimeInfoBranch
+            Define tiSysInfoWinLocaleTimeInfoBranchItem
+            Define tiSysInfoWinLocaleDateInfoBranch
+            Define tiSysInfoWinLocaleDateInfoBranchItem
+            Define tiSysInfoWinLocaleCalendarInfoBranch
+            Define tiSysInfoWinLocaleCalendarInfoBranchItem
+            Define tiSysInfoWinLocaleOptionalCalendarInfoBranch
+            Define tiSysInfoWinLocaleOptionalCalendarInfoBranchItem
+            Define tiSysInfoWinLocaleDayNamesBranch
+            Define tiSysInfoDayNamesLongBranch
+            Define tiSysInfoDayNamesLongBranchItem
+            Define tiSysInfoDayNamesShortBranch
+            Define tiSysInfoDayNamesShortBranchItem
+            Define tiSysInfoWinLocaleMonthNamesBranch
+            Define tiSysInfoMonthNamesLongBranch
+            Define tiSysInfoMonthNamesLongBranchItem
+            Define tiSysInfoMonthNamesShortBranch
+            Define tiSysInfoMonthNamesShortBranchItem
+            Define tiSysInfoWinLocaleCountryBranch
+            Define tiSysInfoWinLocaleCountryBranchItem
+            Define tiSysInfoWinLocaleDefaultsBranch
+            Define tiSysInfoWinLocaleDefaultsBranchItem
+            Define tiSysInfoDataFileBranch
+            Define tiSysInfoDataFilesFieldBranch
+            Define tiSysInfoDataFilesIndexBranchItem
+            Define tiSysInfoDataFilesIndexSegmentsBranchItem
+            Define tiSysInfoDataFilesIndexSegmentBranchItem
+        End_Enum_List
+
+        // When a root item is created we will fake the treeview by telling there are childitems. This
+        // way the tree can be build stepwise and not all on opening this dialog (making sysinfo quite slow)
+        Procedure AddTreeRootItem String sText Integer iItemData Integer iImage Integer iSelectedImage
+            Handle hItem
+
+            Get AddTreeItem sText 0 iItemData iImage iSelectedImage to hItem
+            Set ItemChildCount hItem to 1
+        End_Procedure
+
+        // When the treeview is created add a number of root items to explore
+        Procedure OnCreateTree
+            Forward Send OnCreateTree
+
+            Send AddTreeRootItem C_$WorkSpace tiSysInfoWorkSpaceBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$Application tiSysInfoApplicationBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$DatabaseDrivers tiSysInfoDataBaseDriversBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$Versions tiSysInfoVersionBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$Memory tiSysInfoMemoryBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$Paths tiSysInfoFilesDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$KeyBoard tiSysInfoKeyboardBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$AcceleratorKeys tiSysInfoAccKeysBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$Registration tiSysInfoRegistrationBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$User tiSysInfoUserBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$WindowsLocale tiSysWindowsLocaleBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$GlobalAttributes tiSysInfoGlobalAttributesBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$GlobalVariables tiSysInfoGlobalVariablesBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$SystemMetrics tiSysInfoSystemMetricsBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$SystemConfiguration tiSysInfoSysConfBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+            Send AddTreeRootItem C_$DataFiles tiSysInfoDataFilesBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp
+        End_Procedure
+
+        // This method will be called when the workspace object information is being enumerated. When
+        // empty data is returned we skip the creation of treeview items
+        Procedure AddWorkSpaceItems String sText
+            Handle hItem
+
+            If (sText <> "") Begin
+                Get phCurrentRoot to hItem
+                Get AddTreeItem sText hItem tiSysInfoWorkSpaceBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hItem
+            End
+        End_Procedure
+
+        // Remove an optional present password from the connection string
+        Function RemoveServerPassword String sServerName Returns String
+            String sNewServerName
+            Integer iFromPos iToPos
+
+            Move (Pos ("PWD=", Uppercase (sServerName))) to iFromPos
+            If (iFromPos = 0) Begin
+                Function_Return sServerName
+            End
+
+            Move (Left (sServerName, iFromPos - 1)) to sNewServerName
+            Move (Mid (sServerName, Length (sServerName), iFromPos)) to sServerName
+            Move (Pos (";", sServerName)) to iToPos
+            If (iToPos > 0) Begin
+                Move (sNewServerName + Mid (sServerName, Length (sServerName), iToPos + 1)) to sNewServerName
+            End
+
+            Function_Return sNewServerName
+        End_Function
+
+        // Add information about the number of drivers loaded
+        Procedure AddDriversInfo
+            Handle hItem hDriverItem
+            Integer iNumberOfDrivers iDriverNum
+            String sDriverName
+
+            Get phCurrentRoot to hItem
+
+            Get_Attribute DF_NUMBER_DRIVERS to iNumberOfDrivers
+            For iDriverNum from 1 to iNumberOfDrivers
+                Get_Attribute DF_DRIVER_NAME of iDriverNum to sDriverName
+                If (sDriverName <> "") Begin
+                    Get AddTreeItem sDriverName hItem (iDriverNum * 65536 + tiSysInfoDataBaseDriversBranchItem) tvSysInfoItemBmp tvSysInfoItemBmp to hDriverItem
+                    If (sDriverName <> "DATAFLEX") Begin
+                        Set ItemChildCount hDriverItem to 1
+                    End
+                End
+            Loop
+        End_Procedure
+
+        // Add driver specific information
+        Procedure AddDriverInfo Handle hItem Integer iDriverNum
+            String sDriverName sRevNumber sClientVersion
+            Handle hVoid hoMSSQLDriver hServersItem
+            Integer iClientVersion iNumberOfServers
+
+            Get ItemLabel hItem to sDriverName
+            If (sDriverName = "MSSQLDRV" or sDriverName = "ODBC_DRV" or sDriverName = "DB2_DRV" or sDriverName = "DFBTRDRV") Begin
+                Get CKRevisionNumber sDriverName to sRevNumber
+                Get AddTreeItem (SFormat (C_$Revision, sRevNumber)) hItem tiSysInfoDataBaseDriverItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                If (sDriverName = "MSSQLDRV") Begin
+                    Get_Attribute DF_DRIVER_SQLSERVER_CLIENT_VERSION of iDriverNum to iClientVersion
+                    Get Create (RefClass (cMSSQLHandler)) to hoMSSQLDriver
+                    Get SqlServerClientVersionName of hoMSSQLDriver iClientVersion to sClientVersion
+                    Send Destroy of hoMSSQLDriver
+                    Get AddTreeItem (SFormat (C_$ClientVersion, sClientVersion)) hItem tiSysInfoDataBaseDriverItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                End
+                
+                Get_Attribute DF_DRIVER_NUMBER_SERVERS of iDriverNum to iNumberOfServers
+                If (iNumberOfServers > 0) Begin
+                    Get AddTreeItem C_$Servers hItem (iDriverNum * 65536 + tiSysInfoDataBaseServersBranch) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hServersItem
+                    Set ItemChildCount hServersItem to 1
+                End            
+            End
+            
+        End_Procedure
+
+        // Add all servers for the passed driver
+        Procedure AddServersInfo Handle hItem Integer iDriverNum
+            Integer iServerNum iNumberOfServers
+            String sServerName
+            Handle hVoid
+
+            Get_Attribute DF_DRIVER_NUMBER_SERVERS of iDriverNum to iNumberOfServers
+            For iServerNum from 1 to iNumberOfServers
+                Get_Attribute DF_DRIVER_SERVER_NAME of iDriverNum iServerNum to sServerName
+                Get RemoveServerPassword sServerName to sServerName
+                Get AddTreeItem sServerName hItem tiSysInfoDataBaseServersBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Loop
+        End_Procedure
+
+        // Add version information stored in the runtime, registry and files from the bindirectory
+        Procedure AddVersionInfo
+            Handle hRoot hVoid hoRegistry
+            Integer iVersionMajor iVersionMinor iVersionRelease
+            String sKey sVersionDescription sVersion
+            Boolean bExists bOpened
+
+            Version_Information iVersionMajor iVersionMinor iVersionRelease
+
+            Get phCurrentRoot to hRoot
+
+            Get AddTreeItem (SFormat (C_$RuntimeVersion, String (iVersionMajor) - "." - String (iVersionMinor) - "." - String (iVersionRelease))) hRoot tiSysInfoVersionBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$PackageVersion, String (PKG_VERSION) - "." - String (PKG_REVISION) - "." - String (PKG_BUILD))) hRoot tiSysInfoVersionBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$FMACVersion, String (FMAC_VERSION) - "." - String (FMAC_REVISION) - "." - String (FMAC_BUILD))) hRoot tiSysInfoVersionBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+
+            Get Create (RefClass (cRegistry)) to hoRegistry
+            Set phRootKey of hoRegistry to HKEY_LOCAL_MACHINE
+            Set pfAccessRights of hoRegistry to KEY_READ
+
+            Move C_DFVersionRegistryRoot to sKey
+            Get KeyExists of hoRegistry sKey to bExists
+            If (bExists) Begin
+                Get OpenKey of hoRegistry sKey to bOpened
+                If (bOpened) Begin
+                    Get ValueExists of hoRegistry "CurrentVersionDescription" to bExists
+                    If (bExists) Begin
+                        Get ReadString of hoRegistry "CurrentVersionDescription" to sVersionDescription
+                    End
+
+                    Get ValueExists of hoRegistry "CurrentVersion" to bExists
+                    If (bExists) Begin
+                        Get ReadString of hoRegistry "CurrentVersion" to sVersion
+                    End
+                    Send CloseKey of hoRegistry
+                End
+            End
+            Send Destroy of hoRegistry
+
+            If (sVersionDescription <> "") Begin
+                Get AddTreeItem (SFormat (C_$ServicePack, sVersionDescription * "-" * sVersion)) hRoot tiSysInfoVersionBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+
+            Send AddBinFiles hRoot
+            Send AddModuleNamesRoot hRoot
+        End_Procedure
+
+        Procedure AddModuleNamesRoot Handle hRootItem
+            Handle hTvRoot
+
+            Get AddTreeItem C_$ModuleNames hRootItem tiSysInfoVersionsEnumeratedModulesDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hTvRoot
+            Set ItemChildCount hTvRoot to 1
+        End_Procedure
+
+        Procedure AddModuleNames Handle hRootItem
+            Integer hoProcessModulesArray iModuleElements iModuleElement hoVersionInfo
+            Boolean bOk
+            WString wsDirectoryName
+            String[] sModuleNames
+
+            Get Create (RefClass (cProcessModulesArray)) to hoProcessModulesArray
+            Send DoEnumProcessModules of hoProcessModulesArray
+            Get psModuleNames of hoProcessModulesArray to sModuleNames
+            Move (SizeOfArray (sModuleNames) - 1) to iModuleElements
+            If (iModuleElements >= 0) Begin
+                Get Create (RefClass (cVersionInfo)) to hoVersionInfo
+                For iModuleElement from 0 to iModuleElements
+                    If (sModuleNames[iModuleElement] <> "") Begin
+                        Move sModuleNames[iModuleElement] to wsDirectoryName
+                        Move (ExtractFileName (sModuleNames[iModuleElement])) to sModuleNames[iModuleElement]
+                        Move (PathRemoveFileSpecW (AddressOf (wsDirectoryName))) to bOk
+                        Move (CString (wsDirectoryName)) to wsDirectoryName
+                        Send AddFile hoVersionInfo wsDirectoryName sModuleNames[iModuleElement] hRootItem True
+                    End
+                Loop
+                Send Destroy of hoVersionInfo
+                Send Destroy of hoProcessModulesArray
+            End
+        End_Procedure
+
+        // This method is called for each file found in a specific directory
+        // The file and path are separated specified because we don't want to duplicate the path on each
+        // entry in the treeview (too much information)
+        Procedure AddFile Integer hoVersionInfo String sDirName String sFileName Handle hTvRoot Boolean bShowDirectory
+            String sFullFileName sFileDate sFileHour sFileMinute sFileSecond sVersion sFileDateTime
+            DateTime dtFileDateTime
+            Integer iVersionMajor iVersionMinor iVersionRelease iVersionBuild
+            Boolean bIncluded
+            Handle hVoid
+
+            Move (Trim (sDirName)) to sDirName
+            Move (Trim (sFileName)) to sFileName
+            If (Right (sDirName, 1) <> SysConf (Sysconf_Dir_Separator)) Begin
+                Move (sDirName - SysConf (Sysconf_Dir_Separator)) to sDirName
+            End
+            Move (sDirName - sFileName) to sFullFileName
+
+            Get_File_Mod_Time sFullFileName to sFileDate sFileHour sFileMinute sFileSecond
+            Move sFileDate to dtFileDateTime
+            Move (DateSetHour (dtFileDateTime, sFileHour)) to dtFileDateTime
+            Move (DateSetMinute (dtFileDateTime, sFileMinute)) to dtFileDateTime
+            Move (DateSetSecond (dtFileDateTime, sFileSecond)) to dtFileDateTime
+            Move dtFileDateTime to sFileDateTime
+
+            Send DoCreate of hoVersionInfo sFullFileName
+
+            Get pbIncluded of hoVersionInfo to bIncluded
+            If (bIncluded) Begin
+                Get piVersionMajor of hoVersionInfo to iVersionMajor
+                Get piVersionMinor of hoVersionInfo to iVersionMinor
+                Get piVersionRelease of hoVersionInfo to iVersionRelease
+                Get piVersionBuild of hoVersionInfo to iVersionBuild
+                Move (SFormat ("%1.%2.%3.%4", iVersionMajor, iVersionMinor, iVersionRelease, iVersionBuild)) to sVersion
+                If (bShowDirectory) Begin
+                    Get AddTreeItem (sFullFileName - ":" * sVersion * "(" - sFileDateTime - ")") hTvRoot tiSysInfoVersionBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                End
+                Else Begin
+                    Get AddTreeItem (sFileName - ":" * sVersion * "(" - sFileDateTime - ")") hTvRoot tiSysInfoVersionBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                End
+            End
+            Else Begin
+                If (bShowDirectory) Begin
+                    Get AddTreeItem (sFullFileName - ": 0.0.0.0 (" - sFileDateTime - ")") hTvRoot tiSysInfoVersionBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                End
+                Else Begin
+                    Get AddTreeItem (sFileName - ":" * sVersion * "(" - sFileDateTime - ")") hTvRoot tiSysInfoVersionBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                End
+            End
+        End_Procedure
+
+        // Add an entry to the treeview to make it possible for the user to explore the
+        // files from the DataFlex bin directory (specified by VDFROOTDIR).
+        Procedure AddBinFiles Handle hTvRoot
+            String sVdfRootDir
+            Integer iRetval
+
+            Get_Profile_String "Defaults" "VdfRootDir" to sVdfRootDir
+            Move (Trim (sVdfRootDir)) to sVdfRootDir
+            If (Right (sVdfRootDir, 1) <> SysConf (Sysconf_Dir_Separator)) Begin
+                Move (sVdfRootDir - SysConf (Sysconf_Dir_Separator)) to sVdfRootDir
+            End
+#IFDEF IS$WIN64
+            Move (sVdfRootDir - "Bin64") to sVdfRootDir
+#ELSE
+            Move (sVdfRootDir - "Bin") to sVdfRootDir
+#ENDIF
+            Get PathIsDirectory sVdfRootDir to iRetval
+            If (iRetval <> 0) Begin
+                Get AddTreeItem (SFormat (C_$FilesFrom, sVdfRootDir)) hTvRoot tiSysInfoVersionsOfBinDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hTvRoot
+                Set ItemChildCount hTvRoot to 1
+            End
+        End_Procedure
+
+        // This method will be called when the user clicks on the entry "files from..."
+        Procedure AddBinFilesInfo
+            Handle hRoot
+            Integer iChannel hoVersionInfo
+            String sVdfRootDir sDirEntry sExtension sInputDirMask
+
+            Get phCurrentRoot to hRoot
+
+            Get Seq_New_Channel to iChannel
+            If (iChannel >= DF_SEQ_CHANNEL_MIN and iChannel <= DF_SEQ_CHANNEL_MAX) Begin
+                Send Cursor_Wait of Cursor_Control
+                Get Create U_cVersionInfo to hoVersionInfo
+                Get ItemLabel hRoot to sVdfRootDir
+                Move (Trim (Right (sVdfRootDir, Length (sVdfRootDir) - Pos (":", sVdfRootDir)))) to sVdfRootDir
+                Move ("DIR:" - sVdfRootDir - "\*.*") to sInputDirMask
+                Direct_Input channel iChannel sInputDirMask
+                While (not (SeqEof))
+                    Readln channel iChannel sDirEntry
+                    If (not (SeqEof) and Left (sDirEntry, 1) <> "[") Begin
+                        Get PathFindExtension sDirEntry to sExtension
+                        If (".DLL.EXE.DRV" contains Uppercase (sExtension)) Begin
+                            Send AddFile hoVersionInfo sVdfRootDir sDirEntry hRoot False
+                        End
+                    End
+                End
+                Close_Input channel iChannel
+                Send Destroy of hoVersionInfo
+                Send Seq_Release_Channel iChannel
+                Send Cursor_Ready of Cursor_Control
+            End
+        End_Procedure
+
+        // Add information about the amount of available memory and the usage according to windows
+        Procedure AddMemoryInfo
+            tWinMemoryStatusEx MemoryStatusInfo
+            Integer iRetval iVoid
+            DWord dwMemoryLoad dwTotalPhys dwAvailPhys dwTotalPageFile dwAvailPageFile dwTotalVirtual dwAvailVirtual
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Move (SizeOfType (tWinMemoryStatusEx)) to MemoryStatusInfo.dwLength
+            Move (GlobalMemoryStatusEx (AddressOf (MemoryStatusInfo))) to iRetval
+            If (iRetval = 0) Begin
+                Move (ShowLastError ()) to iRetval
+            End
+
+            Get AddTreeItem (SFormat (C_$MemoryUtilization, MemoryStatusInfo.dwMemoryLoad)) hItem tiSysInfoMemoryBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$AvailablePhysicalMemory, Real (MemoryStatusInfo.ullAvailPhys) / Real (MemoryStatusInfo.ullTotalPhys) * 100.0)) hItem tiSysInfoMemoryBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$AvailablePagefileSpace, Real (MemoryStatusInfo.ullAvailPageFile) / Real (MemoryStatusInfo.ullTotalPageFile) * 100.0)) hItem tiSysInfoMemoryBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$AvailableVirtualMemory, Real (MemoryStatusInfo.ullAvailVirtual) / Real (MemoryStatusInfo.ullTotalVirtual) * 100.0)) hItem tiSysInfoMemoryBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+
+            Get AddTreeItem (SFormat (C_$AvailableMemoryBytes, MemoryStatusInfo.ullTotalPhys)) hItem tiSysInfoMemoryBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Add the Windows Current Directory Information
+        Procedure AddWindowsCurrentDirectoryInfo
+            String sDirectory sPathname
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Get_Current_Directory to sDirectory
+
+            Get AddTreeItem sDirectory hItem tiSysInfoWindowsCurDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetShortPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameShort, sPathName)) hItem tiSysInfoWindowsCurDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetLongPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameLong, sPathName)) hItem tiSysInfoWindowsCurDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Add the Windows directory information. Normally c:\windows or c:\winnt
+        Procedure AddWindowsDirectoryInfo
+            String sDirectory sPathname
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Get_Windows_Directory to sDirectory
+
+            Get AddTreeItem sDirectory hItem tiSysInfoWindowsDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetShortPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameShort, sPathName)) hItem tiSysInfoWindowsDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetLongPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameLong, sPathname)) hItem tiSysInfoWindowsDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Add the Windows system directory information. Normally c:\windows\system32 or c:\winnt\system32
+        Procedure AddSystemDirectory
+            String sDirectory sPathname
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Get GetSystemDirectory to sDirectory
+
+            Get AddTreeItem sDirectory hItem tiSysInfoSystemDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetShortPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameShort, sPathname)) hItem tiSysInfoSystemDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetLongPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameLong, sPathname)) hItem tiSysInfoSystemDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Retrieve the temp path setting and verify if the path returned exists. If not exist add a node that tells this.
+        Procedure AddTempPathInfo
+            String sDirectory sPathname
+            Handle hItem hVoid
+            Boolean bPathIsDirectory
+
+            Get phCurrentRoot to hItem
+
+            Get GetTempPath to sDirectory
+
+            Get PathIsDirectory sDirectory to bPathIsDirectory
+            If (bPathIsDirectory) Begin
+                Get AddTreeItem sDirectory hItem tiSysInfoTempPathDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                Get GetShortPathName sDirectory to sPathname
+                Get AddTreeItem (SFormat (C_$DirNameShort, sPathName)) hItem tiSysInfoTempPathDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                Get GetLongPathName sDirectory to sPathname
+                Get AddTreeItem (SFormat (C_$DirNameLong, sPathName)) hItem tiSysInfoTempPathDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+            Else Begin
+                Get AddTreeItem (SFormat (C_$NotValidDirectory, sDirectory)) hItem tiSysInfoTempPathDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+        End_Procedure
+
+        // Read the profiles directory available since Win2000
+        Procedure AddProfilesDirectoryInfo
+            String sDirectory sPathname
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Get GetProfilesDirectory to sDirectory
+
+            Get AddTreeItem sDirectory hItem tiSysInfoProfilesDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetShortPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameShort, sPathName)) hItem tiSysInfoProfilesDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetLongPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameLong, sPathName)) hItem tiSysInfoProfilesDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Next to the general profiles directory there is a directory for all users. This method will add that information
+        Procedure AddAllUsersProfileDirectory
+            String sDirectory sPathname
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Get GetAllUsersProfileDirectory to sDirectory
+
+            Get AddTreeItem sDirectory hItem tiSysInfoAllUsersProfilesDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetShortPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameShort, sPathName)) hItem tiSysInfoAllUsersProfilesDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetLongPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameLong, sPathName)) hItem tiSysInfoAllUsersProfilesDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // We also have a profiles directory for the default user.
+        Procedure AddDefaultUserProfileDirectoryInfo
+            String sDirectory sPathname
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Get GetDefaultUserProfileDirectory to sDirectory
+
+            Get AddTreeItem sDirectory hItem tiSysInfoDefaultUsersProfilesDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetShortPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameShort, sPathName)) hItem tiSysInfoDefaultUsersProfilesDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetLongPathName sDirectory to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameLong, sPathName)) hItem tiSysInfoDefaultUsersProfilesDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Get the filelist name and path and add this to the treeview in the long and shortname format
+        Procedure AddCurrentFileListCfgInfo
+            String sFilename sPathname
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Get_Attribute DF_FILELIST_NAME to sFilename
+
+            Get AddTreeItem sFilename hItem tiSysInfoCurrentFileListCfgDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetShortPathName sFilename to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameShort, sPathName)) hItem tiSysInfoCurrentFileListCfgDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetLongPathName sFilename to sPathname
+            Get AddTreeItem (SFormat (C_$DirNameLong, sPathName)) hItem tiSysInfoCurrentFileListCfgDirBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Read the logical drives currently active and add type description (harddisk, floppy disk, cd-rom etc) to the names.
+        Procedure AddLogicalDrivesInfo
+            String sLogicalDrivesString sDriveId sDriveTypeDescr
+            Handle hItem hVoid
+            Integer iLogicalDrivesStringLength iDriveNum iDriveType
+
+            Get phCurrentRoot to hItem
+
+            Get GetLogicalDriveStrings to sLogicalDrivesString
+            Move (Length (sLogicalDrivesString)) to iLogicalDrivesStringLength
+            For iDriveNum from 1 to iLogicalDrivesStringLength
+                Move (Mid (sLogicalDrivesString, 3, iDriveNum)) to sDriveId
+                If (sDriveId <> "") Begin
+                    Get GetDriveType sDriveId to iDriveType
+                    Get DriveType2Descr iDriveType to sDriveTypeDescr
+                    Get AddTreeItem (sDriveId * "(" - sDriveTypeDescr - ")") hItem tiSysInfoLogicalDrivesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                End
+                Move (iDriveNum + 3) to iDriveNum
+            Loop
+        End_Procedure
+
+        // This method fills the treeview with information about the current directory, the windows directory
+        // and the current filelist. Especially usefull when there is no use of workspaces
+        Procedure AddFilesAndDirInfo
+            Handle hItem hChildItem
+
+            Get phCurrentRoot to hItem
+
+            Get AddTreeItem C_$WindowsCurrentDirectory hItem tiSysInfoWindowsCurDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+
+            Get AddTreeItem C_$WindowsBaseDirectory hItem tiSysInfoWindowsDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+
+            Get AddTreeItem C_$SystemDirectory hItem tiSysInfoSystemDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+
+            Get AddTreeItem C_$TempPath hItem tiSysInfoTempPathDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+
+            If (SysConf (SYSCONF_OS_MAJOR_REV) >= 5) Begin
+                Get AddTreeItem C_$ProfilesDirectory hItem tiSysInfoProfilesDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+                Set ItemChildCount hChildItem to 1
+
+                Get AddTreeItem C_$AllUsersProfileDirectory hItem tiSysInfoAllUsersProfilesDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+                Set ItemChildCount hChildItem to 1
+
+                Get AddTreeItem C_$DefaultUserProfileDirectory hItem tiSysInfoDefaultUsersProfilesDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+                Set ItemChildCount hChildItem to 1
+            End
+
+            Get AddTreeItem C_$CurrentFilelistCFG hItem tiSysInfoCurrentFileListCfgDirBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+
+            Get AddTreeItem C_$LogicalDrives hItem tiSysInfoLogicalDrivesBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+        End_Procedure
+
+        // This method finds out what kind of keyboard is attached, how many functionkeys are available
+        // and what the name of keyboard layout is.
+        Procedure AddKeyboardInfo
+            Integer iKeyboardType
+            String sKeyBoardType sKeyboardLayoutName
+            Handle hRoot hVoid
+
+            Get phCurrentRoot to hRoot
+
+            Get GetKeyboardType Keyboard_Type to iKeyboardType
+            Case Begin
+                Case (iKeyboardType = IBM_PC_XT_Or_Compatible_Keyboard)
+                    Move C_$IBMPCXTCompatibleKeyboard to sKeyBoardType
+                    Case Break
+                Case (iKeyboardType = Olivetti_ICO_Keyboard)
+                    Move C_$OlivettiICOKeyboard to sKeyBoardType
+                    Case Break
+                Case (iKeyboardType = IBM_PC_AT_Or_Similar_Keyboard)
+                    Move C_$IBMPCATOrSimilarKeyboard to sKeyBoardType
+                    Case Break
+                Case (iKeyboardType = IBM_Enhanced_Keyboard)
+                    Move C_$IBMEnhancedKeyboard to sKeyBoardType
+                    Case Break
+                Case (iKeyboardType = Nokia_1050_And_Similar_Keyboards)
+                    Move C_$Nokia1050AndSimilarKeyboards to sKeyBoardType
+                    Case Break
+                Case (iKeyboardType = Nokia_9140_And_Similar_Keyboards)
+                    Move C_$Nokia9140AndSimilarKeyboards to sKeyBoardType
+                    Case Break
+                Case (iKeyboardType = Japanese_Keyboard)
+                    Move C_$JapaneseKeyboards to sKeyBoardType
+                    Case Break
+                Case Else
+                    Move (SFormat (C_$KeyboadUndefined, iKeyboardType)) to sKeyBoardType
+                    Case Break
+            Case End
+
+            Get AddTreeItem (SFormat (C_$KeyBoardType, sKeyBoardType)) hRoot tiSysInfoKeyboardBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetKeyboardType Keyboard_Function_Key_Count to iKeyboardType
+            Get AddTreeItem (SFormat (C_$KeyboardFunctionKeys, iKeyboardType)) hRoot tiSysInfoKeyboardBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetKeyboardLayoutName to sKeyboardLayoutName
+            Get AddTreeItem (SFormat (C_$KeyboardLayoutName, sKeyboardLayoutName)) hRoot tiSysInfoKeyboardBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // The following definitions make is possible for us to find out if the defined physical key connected
+        // to a DataFlex accelerator key is a function key, whether the shift, alt or ctrl is active.
+        Define Alt_Key      for |CI$0200
+        Define Shift_Key    for |CI$0400
+        Define Ctrl_Key     for |CI$0800
+        Define Function_Key for |CI$1000
+
+        // This object contains the names of the physical keys.
+        // It is an internal object used by the function AccKeyName
+        Object oPhysicalKeys is an Array
+            Set Array_Value item  1 to C_$EnterKey
+            Set Array_Value item  2 to C_$TabKey
+            Set Array_Value item  3 to C_$BackspaceKey
+            Set Array_Value item  4 to C_$EscKey
+            Set Array_Value item  5 to C_$UpArrowKey
+            Set Array_Value item  6 to C_$DownArrowKey
+            Set Array_Value item  7 to C_$LeftArrowKey
+            Set Array_Value item  8 to C_$RightArrowKey
+            Set Array_Value item  9 to C_$HomeKey
+            Set Array_Value item 10 to C_$EndKey
+            Set Array_Value item 11 to C_$PgUpKey
+            Set Array_Value item 12 to C_$PgDnKey
+            Set Array_Value item 13 to C_$InsKey
+            Set Array_Value item 14 to C_$DelKey
+            Set Array_Value item 16 to C_$F1Key
+            Set Array_Value item 17 to C_$F2Key
+            Set Array_Value item 18 to C_$F3Key
+            Set Array_Value item 19 to C_$F4Key
+            Set Array_Value item 20 to C_$F5Key
+            Set Array_Value item 21 to C_$F6Key
+            Set Array_Value item 22 to C_$F7Key
+            Set Array_Value item 23 to C_$F8Key
+            Set Array_Value item 24 to C_$F9Key
+            Set Array_Value item 25 to C_$F10Key
+            Set Array_Value item 26 to C_$F11Key
+            Set Array_Value item 27 to C_$F12Key
+        End_Object
+
+        // This function translates a given keyvalue (kPrint_Screen for example) into a physical key
+        // and from there to a keyname.
+        // It is an internal function called from DoAddAccKey
+        Function AccKeyName Integer iKeyVal Returns String
+            Integer iBaseKey
+            String sKey sKeycap
+
+            If (iKeyVal = 0) Begin
+                Function_Return C_$AccKeyUndefined
+            End
+
+            Move (Key_Physical (iKeyVal)) to iKeyVal
+            Move (iKeyVal iand $FF) to iBaseKey
+            Case Begin
+                Case ((iKeyVal iand Ctrl_Key) = Ctrl_Key)
+                    Move C_$KeyCtrlAnd to sKey
+                    Case Break
+                Case ((iKeyVal iand Shift_Key) = Shift_Key)
+                    Move C_$KeyShiftAnd to sKey
+                    Case Break
+                Case ((iKeyVal iand Alt_Key) = Alt_Key)
+                    Move C_$KeyAltAnd to sKey
+                    Case Break
+            Case End
+
+            If ((iKeyVal iand Function_Key) = Function_Key) Begin
+                Get String_Value of oPhysicalKeys iBasekey to sKeyCap
+            End
+            Else Begin
+                If ((iBasekey < $20) = True) Begin
+                    Move (iBasekey ior $40) to iBasekey
+                End
+                Move (Character (iBasekey)) to sKeycap
+                Case Begin
+                    Case (sKeycap = " ")
+                        Move C_$KeySpace to sKeycap
+                        Case Break
+                    Case (sKeycap = "+")
+                        Move C_$KeyAdd to sKeycap
+                        Case Break
+                    Case (sKeycap = "-")
+                        Move C_$KeySubtract to sKeycap
+                        Case Break
+                    Case Else
+                        Move (Uppercase (sKeycap)) to sKeycap
+                        Case Break
+                Case End
+            End
+
+            Function_Return (sKey - sKeyCap)
+        End_Function
+
+        // This method will add an accelerator key as description, keyname and functionkey name to the treeview
+        // It is an internal function called from DoAddAccKeyInfo
+        Procedure AddAccKey Handle hRoot String sFunctionName String sKeyName Integer iAccKeyNumber
+            Handle hItem hVoid
+            String sAccKeyName
+
+            Get AddTreeItem sFunctionName hRoot tiSysInfoAccKeysBranchItem tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hItem
+            Get AddTreeItem (SFormat (C_$KeyName, sKeyName)) hItem tiSysInfoAccKeysBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AccKeyName iAccKeyNumber to sAccKeyName
+            Get AddTreeItem (SFormat (C_$FunctionKey, sAccKeyName)) hItem tiSysInfoAccKeysBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // This method will be called when the user explore the accelerator keynames treeview branch
+        // and will add keyname and identifier code to the treeview for all DataFlex accelerator keys
+        Procedure AddAccKeyInfo
+            Handle hRoot
+
+            Get phCurrentRoot to hRoot
+
+            Send AddAccKey hRoot C_$PrintScreen C_$kPrintScreen kPrint_Screen
+            Send AddAccKey hRoot C_$Escape C_$kCancel kCancel
+            Send AddAccKey hRoot C_$LeftArrow C_$kLeftArrow kLeftArrow
+            Send AddAccKey hRoot C_$RightArrow C_$kRightArrow kRightArrow
+            Send AddAccKey hRoot C_$PreviousItem C_$kPreviousItem kPrevious_Item
+            Send AddAccKey hRoot C_$Find C_$kFind kFind
+            Send AddAccKey hRoot C_$SuperFind C_$kSuperFind kSuper_Find
+            Send AddAccKey hRoot C_$SaveRecord C_$kSaveRecord  kSave_Record
+            Send AddAccKey hRoot C_$DeleteRecord C_$kDeleteRecord kDelete_Record
+            Send AddAccKey hRoot C_$Calculate C_$kCalculate kCalculate
+            Send AddAccKey hRoot C_$UserDefined1 C_$kUser kUser
+            Send AddAccKey hRoot C_$ClearPanel C_$kClear kClear
+            Send AddAccKey hRoot C_$FindPrevious C_$kFindPrevious kFind_Previous
+            Send AddAccKey hRoot C_$FindNext C_$kFindNext kFind_Next
+            Send AddAccKey hRoot C_$UpArrow C_$kUpArrow kUpArrow
+            Send AddAccKey hRoot C_$DownArrow C_$kDownArrow kDownArrow
+            Send AddAccKey hRoot C_$Help C_$kHelp kHelp
+            Send AddAccKey hRoot C_$UserDefined2 C_$kUser2 kUser2
+            Send AddAccKey hRoot C_$Insert C_$kInsert kInsert
+            Send AddAccKey hRoot C_$DeleteCharacter C_$kDeleteCharacter kDelete_Character
+            Send AddAccKey hRoot C_$Backspace C_$kBack_Space kBack_Space
+            Send AddAccKey hRoot C_$ClearAndReturn C_$kClearAndReturn kClear_And_Return
+            Send AddAccKey hRoot C_$ClearAndBackspace C_$kClEOW kClEOW
+            Send AddAccKey hRoot C_$ExitFunction C_$kExitFunction kExit_Function
+            Send AddAccKey hRoot C_$ExitApplication C_$kExitApplication kExit_Application
+            Send AddAccKey hRoot C_$Prompt C_$kPrompt kPrompt
+            Send AddAccKey hRoot C_$RefreshScreen C_$kRefreshScreen kRefresh_Screen
+            Send AddAccKey hRoot C_$SwitchToNextPanel C_$kSwitch kSwitch
+            Send AddAccKey hRoot C_$SwitchToPreviousPanel C_$kSwitchBack kSwitch_Back
+            Send AddAccKey hRoot C_$SuperfindPrevious C_$kSuperFindPrevious kSuper_Find_Previous
+            Send AddAccKey hRoot C_$SuperfindNext C_$kSuperFind_Next kSuper_Find_Next
+            Send AddAccKey hRoot C_$SwitchToActionBar C_$kActionBar kAction_Bar
+            Send AddAccKey hRoot C_$ScrollPageUp C_$kScrollBack kScroll_Back
+            Send AddAccKey hRoot C_$ScrollPageDown C_$kScrollForward kScroll_Forward
+            Send AddAccKey hRoot C_$ScrollPageLeft C_$kScrollLeft kScroll_Left
+            Send AddAccKey hRoot C_$ScrollPageRight C_$kScrollRight kScroll_Right
+            Send AddAccKey hRoot C_$BeginOfLine C_$kBeginOfLine kBegin_Of_Line
+            Send AddAccKey hRoot C_$EndOfLine C_$kEndOfLine kEnd_Of_Line
+            Send AddAccKey hRoot C_$NextItem C_$kNextItem kNext_Item
+            Send AddAccKey hRoot C_$EraseToEndOfLine C_$kEraseEndOfLine kErase_End_Of_Line
+            Send AddAccKey hRoot C_$BeginOfPanel C_$kBeginOfPanel kBegin_Of_Panel
+            Send AddAccKey hRoot C_$EndOfPanel C_$kEndOfPanel kEnd_Of_Panel
+            Send AddAccKey hRoot C_$BeginOfData C_$kBeginOfData kBegin_Of_Data
+            Send AddAccKey hRoot C_$EndOfData C_$kEndOfData kEnd_Of_Data
+            Send AddAccKey hRoot C_$SkipWordLeft C_$kWordLeft kWord_Left
+            Send AddAccKey hRoot C_$SkipWordRight C_$kWordRight kWord_Right
+            Send AddAccKey hRoot C_$AddMode C_$kAddMode kAdd_Mode
+            Send AddAccKey hRoot C_$Paste C_$kPaste kPaste
+            Send AddAccKey hRoot C_$Copy C_$kCopy kCopy
+            Send AddAccKey hRoot C_$Cut C_$kCut kCut
+            Send AddAccKey hRoot C_$ClearAllPanels C_$kClearAll kClear_All
+            Send AddAccKey hRoot C_$Mark C_$kMark kMark
+            Send AddAccKey hRoot C_$Zoom C_$kZoom kZoom
+            Send AddAccKey hRoot C_$ClosePanel C_$kClosePanel kClose_Panel
+        End_Procedure
+
+        // Report the DataFlex serialnumber and registration name
+        Procedure AddRegistrationInfo
+            String sRegName
+            Integer iSerialNr iMaxUsers
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Registration sRegName iSerialNr
+            Get_Licensed_Max_Users to iMaxUsers
+
+            Get AddTreeItem (SFormat (C_$Serial, iSerialNr)) hItem tiSysInfoRegistrationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$RegName, sRegName)) hItem tiSysInfoRegistrationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$MaxNumUsers, iMaxUsers)) hItem tiSysInfoRegistrationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Add information belonging to the currently logged in user
+        Procedure AddUserInfo
+            Handle hRoot hVoid
+            Integer iUserDefaultLangID
+            String sUserName sComputerName sLanguageName
+            UInteger uiDoubleClickTime
+
+            Get phCurrentRoot to hRoot
+
+            Get GetUserName to sUserName
+            Get AddTreeItem (SFormat (C_$UserName, sUserName)) hRoot tiSysInfoUserBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+
+            Get GetComputerName to sComputerName
+            Get AddTreeItem (SFormat (C_$ComputerName, sComputerName)) hRoot tiSysInfoUserBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+
+            Get GetDoubleClickTime to uiDoubleClickTime
+            Get AddTreeItem (SFormat (C_$DoubleClickTime, uiDoubleClickTime, C_$Milliseconds)) hRoot tiSysInfoUserBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+
+            Get GetUserDefaultLangID to iUserDefaultLangID
+            Get LanguageId2Name iUserDefaultLangID to sLanguageName
+            Get AddTreeItem (SFormat (C_$LanguageIDAndName, iUserDefaultLangID, sLanguageName)) hRoot tiSysInfoUserBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Read the Windows Locale settings for the numbers display and formatting
+        Procedure AddWinLocaleNumberInfo
+            Handle hItem hVoid
+            String sValue
+
+            Get phCurrentRoot to hItem
+
+            Get WindowsLocaleValue LOCALE_SDECIMAL to sValue
+            Get AddTreeItem (SFormat (C_$DecimalSeparator, sValue)) hItem tiSysInfoWinLocaleNumberInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_STHOUSAND to sValue
+            Get AddTreeItem (SFormat (C_$WindowsLocaleThousandsSeparator, sValue)) hItem tiSysInfoWinLocaleNumberInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SGROUPING to sValue
+            Get AddTreeItem (SFormat (C_$DecimalGrouping, sValue)) hItem tiSysInfoWinLocaleNumberInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IDIGITS to sValue
+            Get AddTreeItem (SFormat (C_$Digits, sValue)) hItem tiSysInfoWinLocaleNumberInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_ILZERO to sValue
+            Get AddTreeItem (SFormat (C_$LeadingZeroes, sValue)) hItem tiSysInfoWinLocaleNumberInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_INEGNUMBER to sValue
+            Get AddTreeItem (SFormat (C_$NegativeNumberMode, sValue)) hItem tiSysInfoWinLocaleNumberInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SNATIVEDIGITS to sValue
+            Get AddTreeItem (SFormat (C_$NativeDigits, sValue)) hItem tiSysInfoWinLocaleNumberInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Read and add the Language information from the Windows locale
+        Procedure AddWinLocaleLanguageInfo
+            Handle hItem hVoid
+            String sValue
+
+            Get phCurrentRoot to hItem
+
+            Get WindowsLocaleValue LOCALE_ILANGUAGE to sValue
+            Get AddTreeItem (SFormat (C_$LanguageId, sValue)) hItem tiSysInfoWinLocaleLanguageInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SLANGUAGE to sValue
+            Get AddTreeItem (SFormat (C_$LanguageName, sValue)) hItem tiSysInfoWinLocaleLanguageInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SENGLANGUAGE to sValue
+            Get AddTreeItem (SFormat (C_$LanguageISOName, sValue)) hItem tiSysInfoWinLocaleLanguageInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SABBREVLANGNAME to sValue
+            Get AddTreeItem (SFormat (C_$LanguageAbbreviatedName, sValue)) hItem tiSysInfoWinLocaleLanguageInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SNATIVELANGNAME to sValue
+            Get AddTreeItem (SFormat (C_$LanguageNativeName, sValue)) hItem tiSysInfoWinLocaleLanguageInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Read and add the currency information from the Windows Locale
+        Procedure AddWinLocaleCurrencyInfo
+            Handle hItem hVoid
+            String sValue
+
+            Get phCurrentRoot to hItem
+
+            Get WindowsLocaleValue LOCALE_SCURRENCY to sValue
+            Get AddTreeItem (SFormat (C_$CurrencyLocalSymbol, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SINTLSYMBOL to sValue
+            Get AddTreeItem (SFormat (C_$IntlSymbol, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SMONDECIMALSEP to sValue
+            Get AddTreeItem (SFormat (C_$MonetaryDecimalSeparator, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SMONTHOUSANDSEP to sValue
+            Get AddTreeItem (SFormat (C_$MonetaryThousandsSeparator, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SMONGROUPING to sValue
+            Get AddTreeItem (SFormat (C_$MonetaryGrouping, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_ICURRDIGITS to sValue
+            Get AddTreeItem (SFormat (C_$LocalDigits, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IINTLCURRDIGITS to sValue
+            Get AddTreeItem (SFormat (C_$IntlDigits, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_ICURRENCY to sValue
+            Get AddTreeItem (SFormat (C_$PositiveMode, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_INEGCURR to sValue
+            Get AddTreeItem (SFormat (C_$NegativeMode, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SPOSITIVESIGN to sValue
+            Get AddTreeItem (SFormat (C_$PositiveSign, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SNEGATIVESIGN to sValue
+            Get AddTreeItem (SFormat (C_$NegativeSign, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IPOSSIGNPOSN to sValue
+            Get AddTreeItem (SFormat (C_$FormattingIndexForPositiveValues, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_INEGSIGNPOSN to sValue
+            Get AddTreeItem (SFormat (C_$FormattingIndexForNegativeValues, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IPOSSYMPRECEDES to sValue
+            Get AddTreeItem (SFormat (C_$MonetarySymbolPositionInAPositiveValue, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IPOSSEPBYSPACE to sValue
+            Get AddTreeItem (SFormat (C_$MonetarySymbolSeparationInAPositiveValue, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_INEGSYMPRECEDES to sValue
+            Get AddTreeItem (SFormat (C_$MonetarySymbolPositionInANegativeValue, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_INEGSEPBYSPACE to sValue
+            Get AddTreeItem (SFormat (C_$MonetarySymbolSeparationInANegativeValue, sValue)) hItem tiSysInfoWinLocaleCurrencyInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Read and add the time information fromt the Windows locale
+        Procedure AddWinLocaleTimeInfo
+            Handle hItem hVoid
+            String sValue
+
+            Get phCurrentRoot to hItem
+
+            Get WindowsLocaleValue LOCALE_STIME to sValue
+            Get AddTreeItem (SFormat (C_$Separator, sValue)) hItem tiSysInfoWinLocaleTimeInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_STIMEFORMAT to sValue
+            Get AddTreeItem (SFormat (C_$Format, sValue)) hItem tiSysInfoWinLocaleTimeInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_ITIME to sValue
+            Get AddTreeItem (SFormat (C_$PeriodeFormat, sValue)) hItem tiSysInfoWinLocaleTimeInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_ITIMEMARKPOSN to sValue
+            Get AddTreeItem (SFormat (C_$MarkerPosition, sValue)) hItem tiSysInfoWinLocaleTimeInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_ITLZERO to sValue
+            Get AddTreeItem (SFormat (C_$UseLeadingZeroes, sValue)) hItem tiSysInfoWinLocaleTimeInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_S1159 to sValue
+            Get AddTreeItem (SFormat (C_$AMDesignator, sValue)) hItem tiSysInfoWinLocaleTimeInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_S2359 to sValue
+            Get AddTreeItem (SFormat (C_$PMDesignator, sValue)) hItem tiSysInfoWinLocaleTimeInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Read and add the Date information
+        Procedure AddWinLocaleDateInfo
+            Integer iCalendarType
+            Handle hItem hCalendarRoot hVoid hNamesRoot
+            String sItemLabel sValue
+
+            Get phCurrentRoot to hItem
+
+            Get WindowsLocaleValue LOCALE_SDATE to sValue
+            Get AddTreeItem (SFormat (C_$Separator, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SYEARMONTH to sValue
+            Get AddTreeItem (SFormat (C_$YearMonthFormat, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SSHORTDATE to sValue
+            Get AddTreeItem (SFormat (C_$ShortFormat, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SLONGDATE to sValue
+            Get AddTreeItem (SFormat (C_$LongFormat, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IDATE to sValue
+            Get AddTreeItem (SFormat (C_$ShortDateFormatOrdering, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_ILDATE to sValue
+            Get AddTreeItem (SFormat (C_$LongDateFormatOrdering, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_ICENTURY to sValue
+            Get AddTreeItem (SFormat (C_$Full4DigitCentury, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IDAYLZERO to sValue
+            Get AddTreeItem (SFormat (C_$UseLeadingZeroesInDayFields, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IMONLZERO to sValue
+            Get AddTreeItem (SFormat (C_$UseLeadingZeroesInMonthFields, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IFIRSTDAYOFWEEK to sValue
+            Get AddTreeItem (SFormat (C_$FirstDayOfWeek, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IFIRSTWEEKOFYEAR to sValue
+            Get AddTreeItem (SFormat (C_$FirstWeekOfYear, sValue)) hItem tiSysInfoWinLocaleDateInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+
+            Get AddTreeItem C_$DayNames hItem tiSysInfoWinLocaleDayNamesBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hNamesRoot
+            Set ItemChildCount hNamesRoot to 1
+
+            Get AddTreeItem C_$Monthnames hItem tiSysInfoWinLocaleMonthNamesBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hNamesRoot
+            Set ItemChildCount hNamesRoot to 1
+
+            If (Sysconf (SYSCONF_OS_MAJOR_REV) >= 5) Begin
+                Get WindowsLocaleValue LOCALE_ICALENDARTYPE to iCalendarType
+                Get CalendarType2Descr iCalendarType to sValue
+                Move (SFormat (C_$Calendartype, iCalendarType, sValue)) to sItemLabel
+                Get AddTreeItem sItemLabel hItem (iCalendarType * 65536 + tiSysInfoWinLocaleCalendarInfoBranch) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hCalendarRoot
+                Set ItemChildCount hCalendarRoot to 1
+
+                Get WindowsLocaleValue LOCALE_IOPTIONALCALENDAR to iCalendarType
+                Get CalendarType2Descr iCalendarType to sValue
+                Move (SFormat (C_$AdditionalCalendartype, iCalendarType, sValue)) to sItemLabel
+                Get AddTreeItem sItemLabel hItem (iCalendarType * 65536 + tiSysInfoWinLocaleOptionalCalendarInfoBranch) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hCalendarRoot
+                Set ItemChildCount hCalendarRoot to 1
+            End
+            Else Begin
+                Get AddTreeItem (SFormat (C_$Calendartype, iCalendarType)) hItem tiSysInfoWinLocaleCalendarInfoBranch tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                Get AddTreeItem (SFormat (C_$AdditionalCalendartype, iCalendarType)) hItem tiSysInfoWinLocaleOptionalCalendarInfoBranch tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+        End_Procedure
+
+        // Read and add the calendar information
+        Procedure AddWinLocaleCalendarInfo
+            Integer iCalendarType iItemData
+            Handle hItem hVoid
+            String sItemLabel sValue
+
+            Get phCurrentRoot to hItem
+
+            If (Sysconf (SYSCONF_OS_MAJOR_REV) >= 5) Begin
+                Get ItemData hItem to iItemData
+                Move (Hi (iItemData)) to iCalendarType
+                Get GetCalendarInfo LOCALE_USER_DEFAULT iCalendarType CAL_ITWODIGITYEARMAX to sValue
+                Move (SFormat (C_$WindowsEpoch, sValue)) to sItemLabel
+                Get AddTreeItem sItemLabel hItem tiSysInfoWinLocaleCalendarInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+        End_Procedure
+
+        // Read and add the optional calendar information
+        Procedure AddWinLocaleOptionalCalendarInfo
+            Integer iCalendarType iItemData
+            Handle hItem hVoid
+            String sItemLabel sValue
+
+            Get phCurrentRoot to hItem
+
+            If (Sysconf (SYSCONF_OS_MAJOR_REV) >= 5) Begin
+                Get ItemData hItem to iItemData
+                Move (Hi (iItemData)) to iCalendarType
+                Get GetCalendarInfo LOCALE_USER_DEFAULT iCalendarType CAL_ITWODIGITYEARMAX to sValue
+                Move (SFormat (C_$WindowsEpoch, sValue)) to sItemLabel
+                Get AddTreeItem sItemLabel hItem tiSysInfoWinLocaleOptionalCalendarInfoBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+        End_Procedure
+
+        // Add the nodes that will contain the long and short daynames later
+        Procedure AddWinLocaleDayNamesInfo
+            Handle hItem hChildItem
+
+            Get phCurrentRoot to hItem
+
+            Get AddTreeItem C_$Long hItem tiSysInfoDayNamesLongBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+            Get AddTreeItem C_$Short hItem tiSysInfoDayNamesShortBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+        End_Procedure
+
+        // Add the long daynames from the windows locale
+        Procedure AddWinLocaleDayNamesLongInfo
+            Handle hItem hVoid
+            String sValue
+            Integer iDay
+
+            Get phCurrentRoot to hItem
+
+            For iDay from LOCALE_SDAYNAME1 to LOCALE_SDAYNAME7
+                Get WindowsLocaleValue iDay to sValue
+                Get AddTreeItem (SFormat (C_$Day, iDay - LOCALE_SDAYNAME1 + 1, sValue)) hItem tiSysInfoDayNamesLongBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Loop
+        End_Procedure
+
+        // Add the short daynames from the windows locale
+        Procedure AddWinLocaleDayNamesShortInfo
+            Handle hItem hVoid
+            String sValue
+            Integer iDay
+
+            Get phCurrentRoot to hItem
+
+            For iDay from LOCALE_SABBREVDAYNAME1 to LOCALE_SABBREVDAYNAME7
+                Get WindowsLocaleValue iDay to sValue
+                Get AddTreeItem (SFormat (C_$Day, iDay - LOCALE_SABBREVDAYNAME1 + 1, sValue)) hItem tiSysInfoDayNamesShortBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Loop
+        End_Procedure
+
+        // Add the nodes that will contain the long and short monthnames later
+        Procedure AddWinLocaleMonthNamesInfo
+            Handle hItem hChildItem
+
+            Get phCurrentRoot to hItem
+
+            Get AddTreeItem C_$Long hItem tiSysInfoMonthNamesLongBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+            Get AddTreeItem C_$Short hItem tiSysInfoMonthNamesShortBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+        End_Procedure
+
+        // Add the long monthnames from the windows locale
+        Procedure AddWinLocaleMonthNamesLongInfo
+            Handle hItem hVoid
+            String sValue
+            Integer iMonth
+
+            Get phCurrentRoot to hItem
+
+            For iMonth from LOCALE_SMONTHNAME1 to LOCALE_SMONTHNAME12
+                Get WindowsLocaleValue iMonth to sValue
+                Get AddTreeItem (SFormat (C_$Month, iMonth - LOCALE_SMONTHNAME1 + 1, sValue)) hItem tiSysInfoMonthNamesLongBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Loop
+
+            Get WindowsLocaleValue LOCALE_SMONTHNAME13 to sValue
+            If (sValue <> "") Begin
+                Get AddTreeItem (SFormat (C_$Month, 13, sValue)) hItem tiSysInfoMonthNamesLongBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+        End_Procedure
+
+        // Add the short monthnames from the windows locale
+        Procedure AddWinLocaleMonthNamesShortInfo
+            Handle hItem hVoid
+            Integer iMonth
+            String sValue
+
+            Get phCurrentRoot to hItem
+
+            For iMonth from LOCALE_SABBREVMONTHNAME1 to LOCALE_SABBREVMONTHNAME12
+                Get WindowsLocaleValue iMonth to sValue
+                Get AddTreeItem (SFormat (C_$Month, iMonth - LOCALE_SABBREVMONTHNAME1 + 1, sValue)) hItem tiSysInfoMonthNamesLongBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Loop
+
+            Get WindowsLocaleValue LOCALE_SABBREVMONTHNAME13 to sValue
+            If (sValue <> "") Begin
+                Get AddTreeItem (SFormat (C_$Month, 13, sValue)) hItem tiSysInfoMonthNamesLongBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+        End_Procedure
+
+        // Read an add the country information from the Windows locale
+        Procedure AddWinLocaleCountryInfo
+            Handle hItem hVoid
+            String sValue
+
+            Get phCurrentRoot to hItem
+
+            Get WindowsLocaleValue LOCALE_ICOUNTRY to sValue
+            Get AddTreeItem (SFormat (C_$CountryId, sValue)) hItem tiSysInfoWinLocaleCountryBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SCOUNTRY to sValue
+            Get AddTreeItem (SFormat (C_$CountryName, sValue)) hItem tiSysInfoWinLocaleCountryBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SENGCOUNTRY to sValue
+            Get AddTreeItem (SFormat (C_$EnglishName, sValue)) hItem tiSysInfoWinLocaleCountryBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SABBREVCTRYNAME to sValue
+            Get AddTreeItem (SFormat (C_$AbbreviatedName, sValue)) hItem tiSysInfoWinLocaleCountryBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_SNATIVECTRYNAME to sValue
+            Get AddTreeItem (SFormat (C_$NativeName, sValue)) hItem tiSysInfoWinLocaleCountryBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Read and add the defaults information from the Windows locale
+        Procedure AddWinLocaleDefaultsInfo
+            Handle hItem hVoid
+            String sValue
+
+            Get phCurrentRoot to hItem
+
+            Get WindowsLocaleValue LOCALE_IDEFAULTCOUNTRY to sValue
+            Get AddTreeItem (SFormat (C_$DefaultsCountryId, sValue)) hItem tiSysInfoWinLocaleDefaultsBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IDEFAULTLANGUAGE to sValue
+            Get AddTreeItem (SFormat (C_$DefaultsLanguageId, sValue)) hItem tiSysInfoWinLocaleDefaultsBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IDEFAULTANSICODEPAGE to sValue
+            Get AddTreeItem (SFormat (C_$ANSICodepage, sValue)) hItem tiSysInfoWinLocaleDefaultsBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IDEFAULTCODEPAGE to sValue
+            Get AddTreeItem (SFormat (C_$Codepage, sValue)) hItem tiSysInfoWinLocaleDefaultsBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Report all windows locale information. The function do simply return what is stored and make no
+        // decisions on this. So when the function says 1 and this has an explanation the Windows doc should
+        // be read
+        Procedure AddWindowsLocaleInfo
+            Handle hRoot hVoid hChildRoot hNamesRoot hChildChildRoot hCalendarRoot
+            String sValue
+
+            Get phCurrentRoot to hRoot
+
+            Get WindowsLocaleValue LOCALE_SLIST to sValue
+            Get AddTreeItem (SFormat (C_$ListSeparator, sValue)) hRoot tiSysInfoUserBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IMEASURE to sValue
+            Get AddTreeItem (SFormat (C_$MeasureId, sValue)) hRoot tiSysInfoUserBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get WindowsLocaleValue LOCALE_IPAPERSIZE to sValue
+            Get AddTreeItem (SFormat (C_$PaperSize, sValue)) hRoot tiSysInfoUserBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+
+            Get AddTreeItem C_$Numbers hRoot tiSysInfoWinLocaleNumberInfoBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildRoot
+            Set ItemChildCount hChildRoot to 1
+
+            Get AddTreeItem C_$Language hRoot tiSysInfoWinLocaleLanguageInfoBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildRoot
+            Set ItemChildCount hChildRoot to 1
+
+            Get AddTreeItem C_$Currency hRoot tiSysInfoWinLocaleCurrencyInfoBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildRoot
+            Set ItemChildCount hChildRoot to 1
+
+            Get AddTreeItem C_$Time hRoot tiSysInfoWinLocaleTimeInfoBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildRoot
+            Set ItemChildCount hChildRoot to 1
+
+            Get AddTreeItem C_$Date hRoot tiSysInfoWinLocaleDateInfoBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildRoot
+            Set ItemChildCount hChildRoot to 1
+
+            Get AddTreeItem C_$Country hRoot tiSysInfoWinLocaleCountryBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildRoot
+            Set ItemChildCount hChildRoot to 1
+
+            Get AddTreeItem C_$Defaults hRoot tiSysInfoWinLocaleDefaultsBranch tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildRoot
+            Set ItemChildCount hChildRoot to 1
+        End_Procedure
+
+        // This method will add the current information from the DataFlex runtime attributes
+        Procedure AddGlobalAttributesInfo
+            Integer iThousandsSeparator iDecimalSeparator iDateSeparator iDateFormat iStrictAttrib
+            Integer iRuntimeProgressFrequency iReportUnsupportedAttributes
+            Integer iLockTimeOut iLockDelay iHighDataIntegrity iEpochValue
+            Boolean bSysdate4State bDate4State
+            String sDateFormat sOpenPath
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Get_Attribute DF_THOUSANDS_SEPARATOR to iThousandsSeparator
+            Get_Attribute DF_DECIMAL_SEPARATOR to iDecimalSeparator
+            Get_Attribute DF_DATE_SEPARATOR to iDateSeparator
+            Get_Attribute DF_DATE_FORMAT to iDateFormat
+            Get_Attribute DF_STRICT_ATTRIBUTES to iStrictAttrib
+            Get_Attribute DF_RUNTIME_PROGRESS_FREQUENCY to iRuntimeProgressFrequency
+            Get_Attribute DF_REPORT_UNSUPPORTED_ATTRIBUTES to iReportUnsupportedAttributes
+            Get_Attribute DF_LOCK_TIMEOUT to iLockTimeOut
+            Get_Attribute DF_LOCK_DELAY to iLockDelay
+            Get_Attribute DF_HIGH_DATA_INTEGRITY to iHighDataIntegrity
+            Get_Attribute DF_OPEN_PATH to sOpenPath
+
+            Get_Attribute DF_SYSDATE_4_STATE to bSysdate4State
+            Get_Attribute DF_DATE_4_STATE to bDate4State
+            Get_Attribute DF_EPOCH_VALUE to iEpochValue
+
+            Case Begin
+                Case (iDateFormat = DF_DATE_USA)
+                    Move C_$USA to sDateFormat
+                    Case Break
+                Case (iDateFormat = DF_DATE_EUROPEAN)
+                    Move C_$European to sDateFormat
+                    Case Break
+                Case (iDateFormat = DF_DATE_MILITARY)
+                    Move C_$Military to sDateFormat
+                    Case Break
+            Case End
+
+            Get AddTreeItem (SFormat (C_$ThousandsSeparator, Character (iThousandsSeparator), iThousandsSeparator)) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$DecimalSeparatorChar, Character (iDecimalSeparator), iDecimalSeparator)) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$DateSeparator, Character (iDateSeparator), iDateSeparator)) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$DateFormat, sDateFormat)) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$StrictAttributes, If (iStrictAttrib, C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$ReportUnsupportedAttributes, If (iReportUnsupportedAttributes, C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$RuntimeProgressFrequencyInterval, iRuntimeProgressFrequency, C_$Milliseconds)) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$LockTimeOut, iLockTimeOut, C_$Milliseconds)) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$LockDelay, iLockDelay, C_$Milliseconds)) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$HighDataIntegrity, If (iHighDataIntegrity, C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$OpenPath, sOpenPath)) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+
+            Get AddTreeItem (SFormat (C_$Sysdate4State, If (bSysdate4State, C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$Date4State, If (bDate4State, C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$Epoch, iEpochValue)) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // This method will add some of the DataFlex global variables to the tree. If you want to see
+        // more you can simply extend the list.
+        Procedure AddGlobalVariablesInfo
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Get AddTreeItem (SFormat (C_$PageEnd, PageEnd)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$PageFeed, PageFeed)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$PageCount, PageCount)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$LineCount, LineCount)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$FlxRevision, Flx_Revision)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$ConstrainTestsCount, Constrain_Tests_Count)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$ConstrainFoundCount, Constrain_Found_Count)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$LastErr, LastErr)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$ChainDepth, Chain_Depth)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$TotalResources, Total_Resources)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$TotalObjects, Total_Objects)) hItem tiSysInfoGlobalVariablesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // This method will add some of the system metrics information to the tree. If you want to see
+        // more you can simply extend the list. Look in WINUSER.PKG for other system metrics constants.
+        Procedure AddSystemMetricsInfo
+            Handle hItem hVoid
+            Boolean bMousePresent bRemoteSession
+            Integer iCleanBoot
+
+            Get phCurrentRoot to hItem
+
+            Define SM_MOUSEWHEELPRESENT for 75
+            Define SM_CXVIRTUALSCREEN   for 78
+            Define SM_CYVIRTUALSCREEN   for 79
+            Define SM_CMONITORS         for 80
+            Define SM_REMOTESESSION     for |CI$1000
+
+            Get AddTreeItem (SFormat (C_$VideoResolution, GetSystemMetrics (SM_CXSCREEN), GetSystemMetrics (SM_CYSCREEN))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$SizeOfArrowBitmapOnHorizontalScrollbar, GetSystemMetrics (SM_CXHSCROLL), GetSystemMetrics (SM_CYHSCROLL))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$HeightOfCaptionbar, GetSystemMetrics (SM_CYCAPTION))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$SizeOfArrowBitmapOnVerticalScrollbar, GetSystemMetrics (SM_CXVSCROLL), GetSystemMetrics (SM_CYVSCROLL))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$MidleEastEnabled, If (GetSystemMetrics (SM_MIDEASTENABLED), C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$SizeOfCursor, GetSystemMetrics (SM_CXCURSOR), GetSystemMetrics (SM_CYCURSOR))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$SizeOfWindowClientAreaForFullScreenWindow, GetSystemMetrics (SM_CXFULLSCREEN), GetSystemMetrics (SM_CYFULLSCREEN))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$SizeOfBitmapsContainedInTheTitleBar, GetSystemMetrics (SM_CXSIZE), GetSystemMetrics (SM_CYSIZE))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Move (GetSystemMetrics (SM_MOUSEPRESENT)) to bMousePresent
+            Get AddTreeItem (SFormat (C_$MousePresent, If (bMousePresent, C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            If (bMousePresent) Begin
+                Get AddTreeItem (SFormat (C_$MouseWheelPresent, If (GetSystemMetrics (SM_MOUSEWHEELPRESENT), C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                Get AddTreeItem (SFormat (C_$MouseButtons, GetSystemMetrics (SM_CMOUSEBUTTONS))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+            Get AddTreeItem (SFormat (C_$DebugVersionOfUserExe, If (GetSystemMetrics (SM_DEBUG), C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$MenuDropAlignment, If (GetSystemMetrics (SM_MENUDROPALIGNMENT), C_$Left, C_$Right))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$PenWindowsInstalled, If (GetSystemMetrics (SM_PENWINDOWS), C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Move (GetSystemMetrics (SM_REMOTESESSION)) to bRemoteSession
+            Get AddTreeItem (If (bRemoteSession, C_$CallingProcessIsTerminalServicesClientSession, C_$CallingProcessIsTerminalServerConsoleSession)) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$SecurityPresent, If (GetSystemMetrics (SM_SECURE), C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$NetWorkPresent, If (GetSystemMetrics (SM_NETWORK) iand |CI00000001, C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$NumberOfDisplayMonitors, GetSystemMetrics (SM_CMONITORS))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Move (GetSystemMetrics (SM_CLEANBOOT)) to iCleanBoot
+            Get AddTreeItem (SFormat (C_$CleanBoot, If (iCleanBoot = 0, C_$Normal, If (iCleanBoot = 1, C_$FailSafe, C_$FailSafeWithNetwork)))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$LeftAndRightMouseButtonsAreSwapped, If (GetSystemMetrics (SM_SWAPBUTTON), C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$SizeOfThumbBoxOnVerticalScrollbar, GetSystemMetrics (SM_CXHTHUMB), GetSystemMetrics (SM_CYVTHUMB))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$RectangleAroundTheLocationOfAFirstClickInADoubleClickSequence, GetSystemMetrics (SM_CXDOUBLECLK), GetSystemMetrics (SM_CYDOUBLECLK))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$SizeOfVirtualScreen, GetSystemMetrics (SM_CXVIRTUALSCREEN), GetSystemMetrics (SM_CYVIRTUALSCREEN))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$DoubleByteCharacterSetUserExeInstalled, If (GetSystemMetrics (SM_DBCSENABLED), C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$ComputerHasALowEndSlowProcessor, If (GetSystemMetrics (SM_SLOWMACHINE), C_$Yes, C_$No))) hItem tiSysInfoGlobalAttributesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // This method will add all the system configuration values to the tree. It is the result of the
+        // various SYSCONF function calls.
+        Procedure AddSysConfInfo
+            Handle hItem hVoid
+
+            Get phCurrentRoot to hItem
+
+            Define SYSCONF_RUNTIME_NAME for 11
+            Define SYSCONF_UTC_TIME_OFFSET for 12
+
+            Get AddTreeItem (SFormat (C_$NumberOfVDFTimerObjectEventsPerSecond, SysConf (SYSCONF_TIMER_RESOLUTION))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$DirectorySeparator, SysConf (SYSCONF_DIR_SEPARATOR))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$OSShortName, SysConf (SYSCONF_OS_SHORT_NAME))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$OSMajorRevision, SysConf (SYSCONF_OS_MAJOR_REV))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$OSMinorRevision, SysConf (SYSCONF_OS_MINOR_REV))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$OSName, SysConf (SYSCONF_OS_NAME))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$MachineName, SysConf (SYSCONF_MACHINE_NAME))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$FileMask, SysConf (SYSCONF_FILE_MASK))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$DataFlexRevision, SysConf (SYSCONF_DATAFLEX_REV))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$SystemName, SysConf (SYSCONF_SYSTEM_NAME))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$PathSeparator, SysConf (SYSCONF_PATH_SEPARATOR))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$RuntimeName, SysConf (SYSCONF_RUNTIME_NAME))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$TimeOffsetFromMeridian, SysConf (SYSCONF_UTC_TIME_OFFSET))) hItem tiSysInfoSysConfBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Test for each index between first and last known index number if the index exists and if so
+        // return the count
+        Function NumberOfIndexes Integer iFile Returns Integer
+            Integer iLastIndex iIndexNum iNumberOfSegments iIndexes
+
+            Get_Attribute DF_FILE_LAST_INDEX_NUMBER of iFile to iLastIndex
+            For iIndexNum from 1 to iLastIndex
+                Get_Attribute DF_INDEX_NUMBER_SEGMENTS of iFile iIndexNum to iNumberOfSegments
+                If (iNumberOfSegments > 0) Begin
+                    Increment iIndexes
+                End
+            Loop
+
+            Function_Return iIndexes
+        End_Function
+
+        { Visibility = Private }
+        Function CKRevisionNumber String sDriverID Returns String
+            Handle hoCLIHandler
+            Handle hoDFBtrDrvHandler
+            String sCKRevision
+
+            If (sDriverID = "MSSQLDRV" or sDriverID = "ODBC_DRV" or sDriverID = "DB2_DRV") Begin
+                Get Create (RefClass (cCLIHandler)) to hoCLIHandler
+                Set psDriverID of hoCLIHandler to sDriverID
+                Get CKRevision of hoCLIHandler to sCKRevision
+                Send Destroy of hoCLIHandler
+            End
+            Else Begin
+                If (sDriverID = "DFBTRDRV") Begin
+                    Get Create (RefClass (cDFBtrDrvHandler)) to hoDFBtrDrvHandler
+                    Set psDriverID of hoDFBtrDrvHandler to sDriverID
+                    Get CKRevision of hoDFBtrDrvHandler to sCKRevision
+                    Send Destroy of hoDFBtrDrvHandler
+                End
+            End
+
+            Function_Return sCKRevision
+        End_Function
+
+        Procedure AddDataFileInfo
+            Handle hItem hVoid hChildItem
+            String sRootName sDisplayName sLogicalName sPhysicalName
+            Integer iFile iFields iItemData iIndexes
+
+            Get phCurrentRoot to hItem
+            Get ItemData hItem to iItemData
+            Move (Hi (iItemData)) to iFile
+
+            Get_Attribute DF_FILE_ROOT_NAME of iFile to sRootName
+            Get_Attribute DF_FILE_DISPLAY_NAME of iFile to sDisplayName
+            Get_Attribute DF_FILE_LOGICAL_NAME of iFile to sLogicalName
+            Get_Attribute DF_FILE_PHYSICAL_NAME of iFile to sPhysicalName
+
+            Get AddTreeItem (SFormat (C_$FileNumber, iFile)) hItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$RootName, sRootName)) hItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$DisplayName, sDisplayName)) hItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$LogicalName, sLogicalName)) hItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+
+            Get AddTreeItem C_$Attributes hItem ((iFile * 65536) + tiSysInfoDataFilesAttributesBranch) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+
+            Get_Attribute DF_FILE_NUMBER_FIELDS of iFile to iFields
+
+            Get AddTreeItem (SFormat (C_$Fields, iFields + 1)) hItem ((iFile * 65536) + tiSysInfoDataFilesFieldsBranch) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+            Set ItemChildCount hChildItem to 1
+
+            Get NumberOfIndexes iFile to iIndexes
+            If (iIndexes > 0) Begin
+                Get AddTreeItem (SFormat (C_$Indexes, iIndexes)) hItem ((iFile * 65536) + tiSysInfoDataFilesIndexesBranch) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hChildItem
+                Set ItemChildCount hChildItem to 1
+            End
+        End_Procedure
+
+        // For all open files report the file attributes, the fieldnames and the indexes
+        Procedure AddDataFilesInfo
+            Integer iMaxSlots iFile iFields
+            Boolean bOpened
+            Handle hItem hVoid hFileItem
+            String sPhysicalName
+
+            Get phCurrentRoot to hItem
+
+            Define DF_NUMBER_FILES_SUPPORTED for |CI27
+
+            Get_Attribute DF_NUMBER_FILES_SUPPORTED to iMaxSlots
+            If (iMaxSlots <= 255) Begin
+                Move 250 to iMaxSlots
+            End
+
+            For iFile from 1 to iMaxSlots
+                Get_Attribute DF_FILE_OPENED of iFile to bOpened
+                If (bOpened) Begin
+                    Get_Attribute DF_FILE_PHYSICAL_NAME of iFile to sPhysicalName
+                    Get AddTreeItem sPhysicalName hItem ((iFile * 65536) + tiSysInfoDataFileBranch) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hFileItem
+                    Set ItemChildCount hFileItem to 1
+                End
+            Loop
+        End_Procedure
+
+        // Internal method used by DoAddDataFilesInfo to add file attributes to the tree. Splitting in multiple
+        // methods makes the code better to read.
+        Procedure AddAttributesInfo Handle hAttributesItem Integer iFile
+            Integer iRecordIdentityField iRecordLength iRecordLengthUsed iRecordsUsed
+            Integer iFileOpenMode iFileAlias iFileCompression iOldState iMaxRecords
+            Integer iFileMultiUser iFileIntegrityCheck iFileIsSystemFile iFileLockType
+            Integer iFileReuseDeletedSpace iFileTransactionMode
+            String sFileLogin sFileOwner sFileDriverName sFileRevision sFieldName
+            Handle hVoid
+
+            Get_Attribute DF_FILE_REVISION of iFile to sFileRevision
+            Get AddTreeItem (SFormat (C_$Revision, sFileRevision)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_RECORD_IDENTITY of iFile to iRecordIdentityField
+            Get_Attribute DF_FIELD_NAME of iFile iRecordIdentityField to sFieldName
+            Get AddTreeItem (SFormat (C_$RecordIdentityField, iRecordIdentityField, sFieldName)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_RECORD_LENGTH of iFile to iRecordLength
+            Get AddTreeItem (SFormat (C_$RecordLength, iRecordLength)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_RECORD_LENGTH_USED of iFile to iRecordLengthUsed
+            Get AddTreeItem (SFormat (C_$RecordLengthUsed, iRecordLengthUsed)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_OPEN_MODE of iFile to iFileOpenMode
+            Get AddTreeItem (SFormat (C_$FileOpenMode, If (iFileOpenMode = DF_SHARE, C_$Shared, C_$Exclusive))) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_ALIAS of iFile to iFileAlias
+            Case Begin
+                Case (iFileAlias = DF_FILE_ALIAS_DEFAULT)
+                    Get AddTreeItem (SFormat (C_$AliasAttribute, C_$NotSet)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFileAlias = DF_FILE_IS_MASTER)
+                    Get AddTreeItem (SFormat (C_$AliasAttribute, C_$Master)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFileAlias = DF_FILE_IS_ALIAS)
+                    Get AddTreeItem (SFormat (C_$AliasAttribute, C_$Alias)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+            Case End
+            Get_Attribute DF_FILE_COMPRESSION of iFile to iFileCompression
+            Case Begin
+                Case (iFileCompression = DF_FILE_COMPRESS_NONE)
+                    Get AddTreeItem (SFormat (C_$Compression, C_$None)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFileCompression = DF_FILE_COMPRESS_FAST)
+                    Get AddTreeItem (SFormat (C_$Compression, C_$FastRLE)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFileCompression = DF_FILE_COMPRESS_STANDARD)
+                    Get AddTreeItem (SFormat (C_$Compression, C_$StandardHuffman)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFileCompression = DF_FILE_COMPRESS_CUSTOM)
+                    Get AddTreeItem (SFormat (C_$Compression, C_$CustomHuffman)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+            Case End
+            Get_Attribute DF_FILE_DRIVER of iFile to sFileDriverName
+            Get AddTreeItem (SFormat (C_$FileDatabaseDriver, sFileDriverName)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_RECORDS_USED of iFile to iRecordsUsed
+            Get AddTreeItem (SFormat (C_$RecordsUsed, iRecordsUsed)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_REUSE_DELETED of iFile to iFileReuseDeletedSpace
+            Get AddTreeItem (SFormat (C_$ReuseDeletedSpace, If (iFileReuseDeletedSpace = DF_FILE_DELETED_NOREUSE, C_$No, C_$Yes))) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_MAX_RECORDS of iFile to iMaxRecords
+            Get AddTreeItem (SFormat (C_$MaxRecords, iMaxRecords)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_INTEGRITY_CHECK of iFile to iFileIntegrityCheck
+            Get AddTreeItem (SFormat (C_$IntegrityCheck, If (iFileIntegrityCheck, C_$Yes, C_$No))) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_IS_SYSTEM_FILE of iFile to iFileIsSystemFile
+            Get AddTreeItem (SFormat (C_$Systemfile, If (iFileIsSystemFile, C_$Yes, C_$No))) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_MULTIUSER of iFile to iFileMultiUser
+            Get AddTreeItem (SFormat (C_$MultiUser, If (iFileMultiUser = DF_FILE_USER_MULTI, C_$Yes, C_$No))) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_TRANSACTION of iFile to iFileTransactionMode
+            Case Begin
+                Case (iFileTransactionMode = DF_FILE_TRANSACTION_NONE)
+                    Get AddTreeItem (SFormat (C_$TransactionTracking, C_$None)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFileTransactionMode = DF_FILE_TRANSACTION_CLIENT_ATOMIC)
+                    Get AddTreeItem (SFormat (C_$TransactionTracking, C_$ClientAtomic)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFileTransactionMode = DF_FILE_TRANSACTION_SERVER_ATOMIC)
+                    Get AddTreeItem (SFormat (C_$TransactionTracking, C_$ServerAtomic)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFileTransactionMode = DF_FILE_TRANSACTION_SERVER_LOGGED)
+                    Get AddTreeItem (SFormat (C_$TransactionTracking, C_$ServerLogged)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+            Case End
+            Get_Attribute DF_FILE_LOCK_TYPE of iFile to iFileLockType
+            Case Begin
+                Case (iFileLockType = DF_LOCK_TYPE_FILE)
+                    Get AddTreeItem (SFormat (C_$LockType, C_$File)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFileLockType = DF_LOCK_TYPE_RECORD)
+                    Get AddTreeItem (SFormat (C_$LockType, C_$Record)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFileLockType = DF_LOCK_TYPE_NONE)
+                    Get AddTreeItem (SFormat (C_$LockType, C_$None)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+            Case End
+            Get_Attribute DF_REPORT_UNSUPPORTED_ATTRIBUTES to iOldState
+            Set_Attribute DF_REPORT_UNSUPPORTED_ATTRIBUTES to False
+            Get_Attribute DF_FILE_LOGIN of iFile to sFileLogin
+            Get AddTreeItem (SFormat (C_$TableLogin, sFileLogin)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FILE_OWNER of iFile to sFileOwner
+            Get AddTreeItem (SFormat (C_$Owner, sFileOwner)) hAttributesItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Set_Attribute DF_REPORT_UNSUPPORTED_ATTRIBUTES to iOldState
+        End_Procedure
+
+        Procedure AddFieldInfo Handle hFieldItem Integer iFile Integer iFieldNum
+            Integer iFieldRelatedFile iFieldRelatedField iFieldOffset
+            Integer iFieldLength iFieldPrecision iFieldMainIndex iFieldType
+            String sFileName sFieldName
+            Boolean bOpened
+            Handle hVoid hFieldsItem
+
+            Get_Attribute DF_FIELD_LENGTH of iFile iFieldNum to iFieldLength
+            Get AddTreeItem (SFormat (C_$FieldLength, iFieldLength)) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FIELD_TYPE of iFile iFieldNum to iFieldType
+            Case Begin
+                Case (iFieldType = DF_ASCII)
+                    Get AddTreeItem (SFormat (C_$Type, "DF_ASCII")) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFieldType = DF_BCD)
+                    Get AddTreeItem (SFormat (C_$Type, "DF_BCD")) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Get_Attribute DF_FIELD_PRECISION of iFile iFieldNum to iFieldPrecision
+                    Get AddTreeItem (SFormat (C_$Precision, iFieldPrecision)) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFieldType = DF_DATE)
+                    Get AddTreeItem (SFormat (C_$Type, "DF_DATE")) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFieldType = DF_OVERLAP)
+                    Get AddTreeItem (SFormat (C_$Type, "DF_OVERLAP")) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFieldType = DF_BINARY)
+                    Get AddTreeItem (SFormat (C_$Type, "DF_BINARY")) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+                Case (iFieldType = DF_TEXT)
+                    Get AddTreeItem (SFormat (C_$Type, "DF_TEXT")) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                    Case Break
+            Case End
+            Get_Attribute DF_FIELD_OFFSET of iFile iFieldNum to iFieldOffset
+            Get AddTreeItem (SFormat (C_$Offset, iFieldOffset)) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_FIELD_INDEX of iFile iFieldNum to iFieldMainIndex
+            If (iFieldMainIndex <> 0) Begin
+                Get AddTreeItem (SFormat (C_$Mainindex, iFieldMainIndex)) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+            Get_Attribute DF_FIELD_RELATED_FILE of iFile iFieldNum to iFieldRelatedFile
+            If (iFieldRelatedFile <> 0) Begin
+                Get_Attribute DF_FIELD_RELATED_FIELD of iFile iFieldNum to iFieldRelatedField
+                Get_Attribute DF_FILE_OPENED of iFieldRelatedFile to bOpened
+                If (bOpened) Begin
+                    Get_Attribute DF_FILE_PHYSICAL_NAME of iFieldRelatedFile to sFileName
+                    Get_Attribute DF_FIELD_NAME of iFieldRelatedFile iFieldRelatedField to sFieldName
+                End
+                Else Begin
+                    Move C_$NotAvailable to sFileName
+                    Move C_$NotAvailable to sFieldName
+                End
+                Get AddTreeItem (SFormat (C_$RelatesToFile, iFieldRelatedFile, sFileName)) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                Get AddTreeItem (SFormat (C_$RelatesToField, iFieldRelatedField, sFieldName)) hFieldItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            End
+        End_Procedure
+
+        // Internal method used by DoAddDataFilesInfo to add file attributes to the tree. Splitting in multiple
+        // methods makes the code better to read.
+        Procedure AddFieldsInfo Handle hFieldsItem Integer iFile
+            Integer iFieldNum iFields
+            String sFieldName
+            Handle hFieldItem
+
+            Get_Attribute DF_FILE_NUMBER_FIELDS of iFile to iFields
+            For iFieldNum from 0 to iFields
+                Get_Attribute DF_FIELD_NAME of iFile iFieldNum to sFieldName
+                Get AddTreeItem sFieldName hFieldsItem ((iFieldNum * 65536) + tiSysInfoDataFilesFieldBranch) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hFieldItem
+                Set ItemChildCount hFieldItem to 1
+            Loop
+        End_Procedure
+
+        // Internal method used by DoAddDataFilesInfo to add file attributes to the tree. Splitting in multiple
+        // methods makes the code better to read.
+        Procedure AddIndexesInfo Handle hIndexesItem Integer iFile
+            Integer iLastIndex iIndexNum iNumberOfSegments
+            Handle hIndexItem
+
+            Get_Attribute DF_FILE_LAST_INDEX_NUMBER of iFile to iLastIndex
+            For iIndexNum from 1 to iLastIndex
+                Get_Attribute DF_INDEX_NUMBER_SEGMENTS of iFile iIndexNum to iNumberOfSegments
+                If (iNumberOfSegments <> 0) Begin
+                    Get AddTreeItem (SFormat (C_$Index, iIndexNum)) hIndexesItem ((iIndexNum * 65536) + tiSysInfoDataFilesIndexBranchItem) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hIndexItem
+                    Set ItemChildCount hIndexItem to 1
+                End
+            Loop
+        End_Procedure
+
+        // Add the individual index information to the tree. Make exploring of the segments
+        // possible.
+        Procedure AddIndexInfo Handle hIndexItem Integer iFile Integer iIndex
+            Integer iNumberOfSegments iNumberOfBuffers iIndexType
+            Integer iNumberOfLevels iIndexKeyLength
+            Handle hIndexSegmentsItem hVoid
+
+            Get_Attribute DF_INDEX_NUMBER_SEGMENTS of iFile iIndex to iNumberOfSegments
+            If (iNumberOfSegments <> 0) Begin
+                Get_Attribute DF_INDEX_NUMBER_BUFFERS of iFile iIndex to iNumberOfBuffers
+                Get AddTreeItem (SFormat (C_$Buffers, iNumberOfBuffers)) hIndexItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                Get_Attribute DF_INDEX_TYPE of iFile iIndex to iIndexType
+                Get AddTreeItem (SFormat (C_$Indextype, If (iIndexType = DF_INDEX_TYPE_ONLINE, C_$Online, C_$Batch))) hIndexItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                Get_Attribute DF_INDEX_LEVELS of iFile iIndex to iNumberOfLevels
+                Get AddTreeItem (SFormat (C_$Levels, iNumberOfLevels)) hIndexItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                Get_Attribute DF_INDEX_KEY_LENGTH of iFile iIndex to iIndexKeyLength
+                Get AddTreeItem (SFormat (C_$KeyLength, iIndexKeyLength)) hIndexItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+                Get AddTreeItem (SFormat (C_$Segments, iNumberOfSegments)) hIndexItem ((iIndex * 65536) + tiSysInfoDataFilesIndexSegmentsBranchItem) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hIndexSegmentsItem
+                Set ItemChildCount hIndexSegmentsItem to 1
+            End
+        End_Procedure
+
+        // Add for each of the segments the fieldname to the tree and make exploring this
+        // item possible.
+        Procedure AddIndexSegmentsInfo Handle hSegmentsItem Integer iFile Integer iIndex
+            Integer iNumberOfSegments iIndexSegmentNum iFieldNum
+            Handle hIndexFieldItem
+            String sFieldName
+
+            Get_Attribute DF_INDEX_NUMBER_SEGMENTS of iFile iIndex to iNumberOfSegments
+
+            For iIndexSegmentNum from 1 to iNumberOfSegments
+                Get_Attribute DF_INDEX_SEGMENT_FIELD of iFile iIndex iIndexSegmentNum to iFieldNum
+                Get_Attribute DF_FIELD_NAME of iFile iFieldNum to sFieldName
+                Get AddTreeItem sFieldName hSegmentsItem ((iIndexSegmentNum * 65536) + tiSysInfoDataFilesIndexSegmentBranchItem) tvSysInfoBookClosedBmp tvSysInfoBookClosedBmp to hIndexFieldItem
+                Set ItemChildCount hIndexFieldItem to 1
+            Loop
+        End_Procedure
+
+        // Add the index segment information; This is the case and the sort direction
+        Procedure AddIndexSegmentInfo Handle hIndexSegmentItem Integer iFile Integer iIndex Integer iIndexSegmentNum
+            Integer iSegmentCase iSegmentDirection
+            Handle hVoid
+
+            Get_Attribute DF_INDEX_SEGMENT_CASE of iFile iIndex iIndexSegmentNum to iSegmentCase
+            Get AddTreeItem (If (iSegmentCase = DF_CASE_USED, "", C_$Not) * C_$CaseSensitive) hIndexSegmentItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get_Attribute DF_INDEX_SEGMENT_DIRECTION of iFile iIndex iIndexSegmentNum to iSegmentDirection
+            Get AddTreeItem (If (iSegmentDirection = DF_ASCENDING, C_$Ascending, C_$Descending)) hIndexSegmentItem tiSysInfoDataFilesBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // Add values (properties) from the ghoApplication object
+        Procedure AddApplicationInfo
+            Handle hItem hVoid
+            String sHelpType sValue
+            Integer eHelpType
+            Boolean bPreserveEnvironment bEnterKeyAsTabKey
+
+            Get peHelpType of ghoApplication to eHelpType
+            Case Begin
+                Case (eHelpType = htWinHelp)
+                    Move C_$HelpTypeWinHelp to sHelpType
+                    Case Break
+                Case (eHelpType = htHTMLHelp)
+                    Move C_$HelpTypeHTMLHelp to sHelpType
+                    Case Break
+                Case (eHelpType = htNoHelp)
+                    Move C_$HelpTypeNoHelp to sHelpType
+                    Case Break
+            Case End
+
+            Get phCurrentRoot to hItem
+
+            Get pbEnterKeyAsTabKey of ghoApplication to bEnterKeyAsTabKey
+            Get AddTreeItem (SFormat (C_$EnterKeyNavForward, If (bEnterKeyAsTabKey, C_$True, C_$False))) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get psHelpFile of ghoApplication to sValue
+            Get AddTreeItem (SFormat (C_$HelpFile, sValue)) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get AddTreeItem (SFormat (C_$HelpType, sHelpType)) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get psCompany of ghoApplication to sValue
+            Get AddTreeItem (SFormat (C_$AppCompanyName, sValue)) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get psProduct of ghoApplication to sValue
+            Get AddTreeItem (SFormat (C_$AppProduct, sValue)) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get psVersion of ghoApplication to sValue
+            Get AddTreeItem (SFormat (C_$AppVersion, sValue)) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get psProgram of ghoApplication to sValue
+            Get AddTreeItem (SFormat (C_$AppProgram, sValue)) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get pbPreserveEnvironment of ghoApplication to bPreserveEnvironment
+            Get AddTreeItem (SFormat (C_$AppPreserveEnvironment, If (bPreserveEnvironment, C_$True, C_$False))) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get RegistryKeyString of ghoApplication to sValue
+            Get AddTreeItem (SFormat (C_$AppRegistryKeyString, sValue)) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetApplicationFileName of ghoApplication to sValue
+            Get AddTreeItem (SFormat (C_$AppFileName, sValue)) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetApplicationPath of ghoApplication to sValue
+            Get AddTreeItem (SFormat (C_$AppPath, sValue)) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+            Get GetApplicationName of ghoApplication to sValue
+            Get AddTreeItem (SFormat (C_$AppName, sValue)) hItem tiSysInfoApplicationBranchItem tvSysInfoItemBmp tvSysInfoItemBmp to hVoid
+        End_Procedure
+
+        // When the user clicks on the "+" symbol in the tree we need to figure out if the
+        // childitems need to be created or not. If not just quit and let Windows open the tree.
+        // If the items need to be created call one of the above methods to fill its part of the
+        // treeview.
+        Procedure OnItemExpanding Handle hItem
+            Integer iItemData iItemImage iType iData hoWorkSpace iFileItemData
+            Integer iFile iIndexesItemData iIndex iIndexItemData
+            Handle hFileItem hIndexesItem hIndexItem hSegmentsItem
+
+            Set phCurrentRoot to hItem
+            Get ItemData hItem to iItemData
+            Move (Low (iItemData)) to iType
+            Move (Hi (iItemData)) to iData
+
+            Get ItemImage hItem to iItemImage
+            If (iItemImage = tvSysInfoBookClosedBmp) Begin
+                Set ItemSelectedImage hItem to tvSysInfoBookOpenBmp
+                Set ItemImage hItem to tvSysInfoBookOpenBmp
+            End
+
+            Case Begin
+                Case (iType = tiSysInfoWorkSpaceBranch)
+                    If (ghoApplication <> 0) Begin
+                        Get phoWorkSpace of ghoApplication to hoWorkSpace
+                        If (hoWorkSpace <> 0) Begin
+                            Register_Procedure EnumerateWorkspaceData Integer hObjId Integer hmMessId
+                            Send EnumerateWorkspaceData of hoWorkSpace Self (Refproc (AddWorkSpaceItems))
+                        End
+                    End
+                    Case Break
+                Case (iType = tiSysInfoApplicationBranch)
+                    Send AddApplicationInfo
+                    Case Break
+                Case (iType = tiSysInfoDataBaseDriversBranch)
+                    Send AddDriversInfo
+                    Case Break
+                Case (iType = tiSysInfoDataBaseDriversBranchItem)
+                    Send AddDriverInfo hItem iData
+                    Case Break
+                Case (iType = tiSysInfoDataBaseServersBranch)
+                    Send AddServersInfo hItem iData
+                    Case Break
+                Case (iType = tiSysInfoMemoryBranch)
+                    Send AddMemoryInfo
+                    Case Break
+                Case (iType = tiSysInfoVersionBranch)
+                    Send AddVersionInfo
+                    Case Break
+                Case (iType = tiSysInfoVersionsOfBinDirBranch)
+                    Send AddBinFilesInfo
+                    Case Break
+                Case (iType = tiSysInfoVersionsEnumeratedModulesDirBranch)
+                    Send AddModuleNames hItem
+                    Case Break
+                Case (iType = tiSysInfoFilesDirBranch)
+                    Send AddFilesAndDirInfo
+                    Case Break
+                Case (iType = tiSysInfoKeyboardBranch)
+                    Send AddKeyboardInfo
+                    Case Break
+                Case (iType = tiSysInfoAccKeysBranch)
+                    Send AddAccKeyInfo
+                    Case Break
+                Case (iType = tiSysInfoRegistrationBranch)
+                    Send AddRegistrationInfo
+                    Case Break
+                Case (iType = tiSysInfoUserBranch)
+                    Send AddUserInfo
+                    Case Break
+                Case (iType = tiSysWindowsLocaleBranch)
+                    Send AddWindowsLocaleInfo
+                    Case Break
+                Case (iType = tiSysInfoGlobalAttributesBranch)
+                    Send AddGlobalAttributesInfo
+                    Case Break
+                Case (iType = tiSysInfoGlobalVariablesBranch)
+                    Send AddGlobalVariablesInfo
+                    Case Break
+                Case (iType = tiSysInfoSystemMetricsBranch)
+                    Send AddSystemMetricsInfo
+                    Case Break
+                Case (iType = tiSysInfoDataFilesBranch)
+                    Send AddDataFilesInfo
+                    Case Break
+                Case (iType = tiSysInfoDataFileBranch)
+                    Send AddDataFileInfo
+                    Case Break
+                Case (iType = tiSysInfoDataFilesAttributesBranch)
+                    Send AddAttributesInfo hItem iData
+                    Case Break
+                Case (iType = tiSysInfoDataFilesFieldsBranch)
+                    Send AddFieldsInfo hItem iData
+                    Case Break
+                Case (iType = tiSysInfoDataFilesFieldBranch)
+                    Get ParentItem hItem to hFileItem
+                    Get ItemData hFileItem to iFileItemData
+                    Move (Hi (iFileItemData)) to iFile
+                    Send AddFieldInfo hItem iFile iData
+                    Case Break
+                Case (iType = tiSysInfoDataFilesIndexesBranch)
+                    Send AddIndexesInfo hItem iData
+                    Case Break
+                Case (iType = tiSysInfoDataFilesIndexBranchItem)
+                    Get ParentItem hItem to hIndexesItem
+                    Get ItemData hIndexesItem to iIndexesItemData
+                    Move (Hi (iIndexesItemData)) to iIndex
+                    Send AddIndexInfo hItem iIndex iData
+                    Case Break
+                Case (iType = tiSysInfoDataFilesIndexSegmentsBranchItem)
+                    Get ParentItem hItem to hIndexItem
+                    Get ParentItem hIndexItem to hFileItem
+                    Get ItemData hFileItem to iFileItemData
+                    Move (Hi (iFileItemData)) to iFile
+                    Send AddIndexSegmentsInfo hItem iFile iData
+                    Case Break
+                Case (iType = tiSysInfoDataFilesIndexSegmentBranchItem)
+                    Get ParentItem hItem to hSegmentsItem
+                    Get ParentItem hSegmentsItem to hIndexItem
+                    Get ItemData hIndexItem to iIndexItemData
+                    Move (Hi (iIndexItemData)) to iIndex
+                    Get ParentItem hIndexItem to hFileItem
+                    Get ItemData hFileItem to iFileItemData
+                    Move (Hi (iFileItemData)) to iFile
+                    Send AddIndexSegmentInfo hItem iFile iIndex iData
+                    Case Break
+                Case (iType = tiSysInfoSysConfBranch)
+                    Send AddSysConfInfo
+                    Case Break
+                Case (iType = tiSysInfoWindowsCurDirBranch)
+                    Send AddWindowsCurrentDirectoryInfo
+                    Case Break
+                Case (iType = tiSysInfoWindowsDirBranch)
+                    Send AddWindowsDirectoryInfo
+                    Case Break
+                Case (iType = tiSysInfoSystemDirBranch)
+                    Send AddSystemDirectory
+                    Case Break
+                Case (iType = tiSysInfoTempPathDirBranch)
+                    Send AddTempPathInfo
+                    Case Break
+                Case (iType = tiSysInfoProfilesDirBranch)
+                    Send AddProfilesDirectoryInfo
+                    Case Break
+                Case (iType = tiSysInfoAllUsersProfilesDirBranch)
+                    Send AddAllUsersProfileDirectory
+                    Case Break
+                Case (iType = tiSysInfoDefaultUsersProfilesDirBranch)
+                    Send AddDefaultUserProfileDirectoryInfo
+                    Case Break
+                Case (iType = tiSysInfoCurrentFileListCfgDirBranch)
+                    Send AddCurrentFileListCfgInfo
+                    Case Break
+                Case (iType = tiSysInfoLogicalDrivesBranch)
+                    Send AddLogicalDrivesInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleNumberInfoBranch)
+                    Send AddWinLocaleNumberInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleLanguageInfoBranch)
+                    Send AddWinLocaleLanguageInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleCurrencyInfoBranch)
+                    Send AddWinLocaleCurrencyInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleTimeInfoBranch)
+                    Send AddWinLocaleTimeInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleDateInfoBranch)
+                    Send AddWinLocaleDateInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleCalendarInfoBranch)
+                    Send AddWinLocaleCalendarInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleOptionalCalendarInfoBranch)
+                    Send AddWinLocaleOptionalCalendarInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleDayNamesBranch)
+                    Send AddWinLocaleDayNamesInfo
+                    Case Break
+                Case (iType = tiSysInfoDayNamesLongBranch)
+                    Send AddWinLocaleDayNamesLongInfo
+                    Case Break
+                Case (iType = tiSysInfoDayNamesShortBranch)
+                    Send AddWinLocaleDayNamesShortInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleMonthNamesBranch)
+                    Send AddWinLocaleMonthNamesInfo
+                    Case Break
+                Case (iType = tiSysInfoMonthNamesLongBranch)
+                    Send AddWinLocaleMonthNamesLongInfo
+                    Case Break
+                Case (iType = tiSysInfoMonthNamesShortBranch)
+                    Send AddWinLocaleMonthNamesShortInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleCountryBranch)
+                    Send AddWinLocaleCountryInfo
+                    Case Break
+                Case (iType = tiSysInfoWinLocaleDefaultsBranch)
+                    Send AddWinLocaleDefaultsInfo
+                    Case Break
+            Case End
+        End_Procedure
+
+        // Internal method used by OnItemCollapsed to delete all the child items of the
+        // the item that is just collapsed.
+        Procedure DoDeleteChildItems Handle hItem
+            Handle hNextItem
+
+            Get ChildItem hItem to hItem
+            While (hItem <> 0)
+                Get NextSiblingItem hItem to hNextItem
+                Send DoDeleteItem hItem
+                Move hNextItem to hItem
+            End
+        End_Procedure
+
+        // When the user closes a branch in the tree we want to delete the child items
+        // of some treetypes. This is usefull when the information can change before
+        // the next time it is opened. So the data will be more accurate.
+        Procedure OnItemCollapsed Handle hItem
+            Integer iItemData
+
+            Set ItemSelectedImage hItem to tvSysInfoBookClosedBmp
+            Set ItemImage hItem to tvSysInfoBookClosedBmp
+            Get ItemData hItem to iItemData
+            If (iItemData <> tiSysInfoAccKeysBranchItem) Begin
+                Send DoDeleteChildItems hItem
+                Set ItemChildCount hItem to 1
+            End
+        End_Procedure
+
+        // This function enumerates the whole treeview and exports the item label of each treeview item
+        // into an xml object. The recursionlevel and the itemtype are exported as attributes
+        Procedure DoEnumerateTreeForXMLExport Handle hItem Integer iRecurseLevel Integer hoXMLRoot
+            Handle hChildItem hoXMLChildRoot hoElement
+            Integer iItemData iItemType
+            String sItemLabel
+
+            If (hoXMLRoot <> 0) Begin
+                Move (WindowsMessage (TVM_GETNEXTITEM, TVGN_CHILD, hItem)) to hChildItem
+                If (hChildItem <> 0) Begin
+                    Get ItemData hItem to iItemData
+                    Move (Low (iItemData)) to iItemType
+                    Get ItemLabel hItem to sItemLabel
+                    Get AddElement of hoXMLRoot C_$Item sItemLabel to hoXMLChildRoot
+                    If (hoXMLChildRoot <> 0) Begin
+                        Send AddAttribute of hoXMLChildRoot C_$Itemtype iItemType
+                        Send DoEnumerateTreeForXMLExport hChildItem (iRecurseLevel + 1) hoXMLChildRoot
+                        Send Destroy of hoXMLChildRoot
+                    End
+                End
+                Else Begin
+                    If (hoXMLRoot <> 0) Begin
+                        Get ItemData hItem to iItemData
+                        Move (Low (iItemData)) to iItemType
+                        Get ItemLabel hItem to sItemLabel
+                        Get AddElement of hoXMLRoot C_$Item sItemLabel to hoElement
+                        If (hoElement <> 0) Begin
+                            Send AddAttribute of hoElement C_$Itemtype iItemType
+                            Send Destroy of hoElement
+                        End
+                    End
+                End
+
+                Move (WindowsMessage (TVM_GETNEXTITEM, TVGN_NEXT, hItem)) to hItem
+                If (hItem <> 0) Begin
+                    Send DoEnumerateTreeForXMLExport hItem iRecurseLevel hoXMLRoot
+                End
+            End
+        End_Procedure
+
+        Procedure AddMetaData Integer hoDocumentRoot
+            Integer hoElement hoItemTypeElement
+
+            Get AddElement of hoDocumentRoot C_$Metadata "" to hoElement
+            If (hoElement <> 0) Begin
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoUserBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoUserBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoUserBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoUserBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysWindowsLocaleBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysWindowsLocaleBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysWindowsLocaleBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysWindowsLocaleBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataBaseDriversBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataBaseDriversBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataBaseDriversBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataBaseDriversBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoVersionBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoVersionBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoVersionBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoVersionBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoVersionsOfBinDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoVersionsOfBinDirBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoVersionsEnumeratedModulesDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoVersionsEnumeratedModulesDirBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWorkSpaceBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWorkSpaceBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWorkSpaceBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWorkSpaceBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoMemoryBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoMemoryBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoMemoryBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoMemoryBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoFilesDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoFilesDirBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoFilesDirBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoFilesDirBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoKeyboardBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoKeyboardBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoKeyboardBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoKeyboardBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoAccKeysBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoAccKeysBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoAccKeysBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoAccKeysBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoRegistrationBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoRegistrationBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement "itemtype" "tiSysInfoRegistrationBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoRegistrationBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataBaseServersBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataBaseServersBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataBaseServersBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataBaseServersBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoGlobalAttributesBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoGlobalAttributesBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoGlobalAttributesBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoGlobalAttributesBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoGlobalVariablesBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoGlobalVariablesBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoGlobalVariablesBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoGlobalVariablesBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoSystemMetricsBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoSystemMetricsBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoSystemMetricsBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoSystemMetricsBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoSysConfBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoSysConfBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoSysConfBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoSysConfBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFilesBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFilesBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFilesFilesBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFilesFilesBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFilesAttributesBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFilesAttributesBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFilesFieldsBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFilesFieldsBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFilesIndexesBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFilesIndexesBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFilesBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFilesBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoApplicationBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoApplicationBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoApplicationBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoApplicationBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWindowsCurDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWindowsCurDirBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWindowsCurDirBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWindowsCurDirBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWindowsDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWindowsDirBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWindowsDirBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWindowsDirBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoSystemDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoSystemDirBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoSystemDirBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoSystemDirBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoTempPathDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoTempPathDirBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoTempPathDirBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoTempPathDirBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoProfilesDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoProfilesDirBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoProfilesDirBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoProfilesDirBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoAllUsersProfilesDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoAllUsersProfilesDirBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoAllUsersProfilesDirBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoAllUsersProfilesDirBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDefaultUsersProfilesDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDefaultUsersProfilesDirBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDefaultUsersProfilesDirBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDefaultUsersProfilesDirBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoCurrentFileListCfgDirBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoCurrentFileListCfgDirBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoCurrentFileListCfgDirBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoCurrentFileListCfgDirBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoLogicalDrivesBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoLogicalDrivesBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoLogicalDrivesBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoLogicalDrivesBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleNumberInfoBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleNumberInfoBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleNumberInfoBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleNumberInfoBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleLanguageInfoBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleLanguageInfoBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleLanguageInfoBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleLanguageInfoBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleCurrencyInfoBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleCurrencyInfoBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleCurrencyInfoBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleCurrencyInfoBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleTimeInfoBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleTimeInfoBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleTimeInfoBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleTimeInfoBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleDateInfoBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleDateInfoBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleCalendarInfoBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleCalendarInfoBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleCalendarInfoBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleCalendarInfoBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleOptionalCalendarInfoBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleOptionalCalendarInfoBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleOptionalCalendarInfoBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleOptionalCalendarInfoBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleDayNamesBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleDayNamesBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDayNamesLongBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDayNamesLongBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDayNamesLongBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDayNamesLongBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDayNamesShortBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDayNamesShortBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDayNamesShortBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDayNamesShortBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleMonthNamesBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleMonthNamesBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoMonthNamesLongBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoMonthNamesLongBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoMonthNamesLongBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoMonthNamesLongBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoMonthNamesShortBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoMonthNamesShortBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoMonthNamesShortBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoMonthNamesShortBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleCountryBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleCountryBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleCountryBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleCountryBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleDefaultsBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleDefaultsBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoWinLocaleDefaultsBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoWinLocaleDefaultsBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFileBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFileBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFilesFieldBranch" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFilesFieldBranch
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFilesIndexBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFilesIndexBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFilesIndexSegmentsBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFilesIndexSegmentsBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+                Get AddElement of hoElement C_$Itemtype "tiSysInfoDataFilesIndexSegmentBranchItem" to hoItemTypeElement
+                If (hoItemTypeElement <> 0) Begin
+                    Send AddAttribute of hoItemTypeElement C_$Value tiSysInfoDataFilesIndexSegmentBranchItem
+                    Send Destroy of hoItemTypeElement
+                End
+
+                Send Destroy of hoElement
+            End
+        End_Procedure
+
+        // This method is called to export all treeview information in a XML document. To do this we
+        // need to open all treeview items first. The filename will be always sysinfo.xml stored in the
+        // first directory of the datapath. If there is no workspace object the file will be created in
+        // the current windows directory.
+        Procedure ExportToXML
+            Handle hRootItem
+            Integer hoXML hoDocumentRoot hoProcessInstructionNode iResult hoCommentNode hoWorkSpace
+            String sDataPath sDocumentName
+            Boolean bErr
+
+            Get Create (Refclass (cXMLDomDocument)) to hoXML
+            If (hoXML <> 0) Begin
+                If (ghoApplication <> 0) Begin
+                    Get phoWorkSpace of ghoApplication to hoWorkSpace
+                End
+                If (hoWorkSpace <> 0) Begin
+                    Get psDataPath of hoWorkSpace to sDataPath
+                    If (sDataPath <> "") Begin
+                        Get PathAtIndex of hoWorkSpace sDataPath 1 to sDataPath
+                        Move (Trim (sDataPath)) to sDataPath
+                        If (Right (sDataPath, 1) <> SysConf (SYSCONF_DIR_SEPARATOR)) Begin
+                            Move (sDataPath - SysConf (SYSCONF_DIR_SEPARATOR)) to sDataPath
+                        End
+                    End
+                End
+                Move (Trim (sDataPath) - "SysInfo.XML") to sDocumentName
+                Set psDocumentName of hoXML to sDocumentName
+                Get CreateDocumentElement of hoXML C_$XMLExportSysteminfo to hoDocumentRoot
+                If (hoDocumentRoot <> 0) Begin
+                    Get CreateChildProcessingInstruction of hoDocumentRoot "xml" 'version="1.0" encoding="UTF-8" standalone="yes"' to hoProcessInstructionNode
+                    If (hoProcessInstructionNode <> 0) Begin
+                        Get InsertBeforeNode of hoXML hoProcessInstructionNode hoDocumentRoot to iResult
+                        Send Destroy of hoProcessInstructionNode
+                    End
+                    Get CreateChildComment of hoXML (SFormat (C_$SysInfoXMLExportComment, String (CurrentDateTime ()))) to hoCommentNode
+                    If (hoCommentNode <> 0) Begin
+                        Get InsertBeforeNode of hoXML hoCommentNode hoDocumentRoot to iResult
+                        Send Destroy of hoCommentNode
+                    End
+                    Get RootItem to hRootItem
+                    Send DoEnumerateTree (Refproc (OnItemExpanding)) hRootItem 0
+                    Send AddMetaData hoDocumentRoot
+                    Send DoEnumerateTreeForXMLExport hRootItem 0 hoDocumentRoot
+                    Send DoEnumerateTree (Refproc (OnItemCollapsed)) hRootItem 0
+                    Send Destroy of hoDocumentRoot
+                    Get SaveXMLDocument of hoXML to bErr
+                    If (not (bErr)) Begin
+                        Send Info_Box (SFormat (C_$XMLExportTo, sDocumentName, C_$Successfull))
+                    End
+                    Else Begin
+                        Send Stop_Box (SFormat (C_$XMLExportTo, sDocumentName, C_$NotSuccessfull))
+                    End
+                End
+                Send Destroy of hoXML
+            End
+        End_Procedure
+    End_Object
+
+    Object oXMLExportButton is a Button
+        Set Label to "&XML export"
+        Set Location to 157 227
+        Set peAnchors to anBottomRight
+
+        // Start the XML export of the treeview data. Tell the user to be patient by changing the
+        // cursor shape.
+        Procedure OnClick
+            Send Cursor_Wait of Cursor_Control
+            Send ExportToXML of oSystemInfoTreeView
+            Send Cursor_Ready of Cursor_Control
+        End_Procedure
+    End_Object
+
+    Object oOkButton is a Button
+        Set Label to "&OK"
+        Set Location to 157 282
+        Set peAnchors to anBottomRight
+        Set Default_State to TRUE
+
+        // Just close the systeminfo panel
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+    End_Object
+
+    // Tell the object what to do if the following keys are pressed.
+    On_Key kCancel Send KeyAction Of oOkButton
+    On_Key Key_Alt+Key_O Send KeyAction Of oOkButton
+    On_Key Key_Alt+Key_X Send KeyAction Of oXMLExportButton
+End_Object

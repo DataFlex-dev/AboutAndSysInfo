@@ -1,0 +1,33 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetShortPathName.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetShortPathName
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, June, 4th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+External_Function WinAPI_GetShortPathName "GetShortPathNameW" Kernel32.Dll Pointer lpszLongPath Pointer lpszShortPath DWord cchBuffer Returns DWord
+
+Define MAX_PATH For 260
+
+Function GetShortPathName Desktop WString wsLongPath Returns String
+    WString wsShortPath
+    Integer iRetval
+
+    Move (ZeroString (MAX_PATH)) to wsShortPath
+
+    Move (WinAPI_GetShortPathName (AddressOf (wsLongPath), AddressOf (wsShortPath), MAX_PATH)) to iRetval
+
+    Function_Return (Cstring (wsShortPath))
+End_Function

@@ -1,0 +1,35 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetComputerName.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetComputerName
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, June, 4th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Define MAX_COMPUTERNAME_LENGTH For 15
+
+External_Function WinAPI_GetComputerName "GetComputerNameW" Kernel32.Dll Pointer lpComputerName DWord nNameSize Returns Integer
+
+Function GetComputerName Desktop Returns String
+    WString wsComputerName
+    Dword dwNameSize
+    Integer iRetval
+
+    Move (ZeroString (MAX_COMPUTERNAME_LENGTH)) to wsComputerName
+    Move MAX_COMPUTERNAME_LENGTH To dwNameSize
+
+    Move (WinAPI_GetComputerName (AddressOf (wsComputerName), AddressOf (dwNameSize))) to iRetval
+
+    Function_Return (CString (wsComputerName))
+End_Function

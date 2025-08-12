@@ -1,0 +1,38 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetAllUsersProfileDirectory.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetAllUsersProfileDirectory
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, June, 4th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+External_Function WinAPI_GetAllUsersProfileDirectory "GetAllUsersProfileDirectoryW" Userenv.Dll Pointer lpProfilesDir Pointer lpcchSize Returns Integer
+
+Define MAX_PATH For 260
+
+Function GetAllUsersProfileDirectory Desktop Returns String
+    WString wsProfileDir
+    Dword dwProfileDirSize
+    Integer iRetval
+
+    Move (ZeroString (MAX_PATH)) to wsProfileDir
+    Move MAX_PATH To dwProfileDirSize
+
+    Move (WinAPI_GetAllUsersProfileDirectory (AddressOf (wsProfileDir), AddressOf (dwProfileDirSize))) to iRetval
+    If (iRetval <> 0) Begin
+        Function_Return (Cstring (wsProfileDir))
+    End
+
+    Function_Return ""
+End_Function

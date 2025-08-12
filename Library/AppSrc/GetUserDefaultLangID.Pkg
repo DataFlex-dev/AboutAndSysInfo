@@ -1,0 +1,480 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetUserDefaultLangID.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetUserDefaultLangID.
+//      Also defines a function to convert the language id to a name.
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, May, 26th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Use SysInfo_Language.inc
+
+Define LanguageName_Language_Neutral           For $0000
+Define LanguageName_Invariant                  For $007F
+Define LanguageName_User_Default_Language      For $0400
+Define LanguageName_System_Default_Language    For $0800
+Define LanguageName_Afrikaans                  For $0436
+Define LanguageName_Albanian                   For $041C
+Define LanguageName_Arabic_Saudi_Arabia        For $0401
+Define LanguageName_Arabic_Iraq                For $0801
+Define LanguageName_Arabic_Egypt               For $0C01
+Define LanguageName_Arabic_Libya               For $1001
+Define LanguageName_Arabic_Algeria             For $1401
+Define LanguageName_Arabic_Morocco             For $1801
+Define LanguageName_Arabic_Tunisia             For $1C01
+Define LanguageName_Arabic_Oman                For $2001
+Define LanguageName_Arabic_Yemen               For $2401
+Define LanguageName_Arabic_Syria               For $2801
+Define LanguageName_Arabic_Jordan              For $2C01
+Define LanguageName_Arabic_Lebanon             For $3001
+Define LanguageName_Arabic_Kuwait              For $3401
+Define LanguageName_Arabic_U.A.E.              For $3801
+Define LanguageName_Arabic_Bahrain             For $3C01
+Define LanguageName_Arabic_Qatar               For $4001
+Define LanguageName_Armenian                   For $042B
+Define LanguageName_Assamese                   For $044D
+Define LanguageName_Azeri_Latin                For $042C
+Define LanguageName_Azeri_Cyrillic             For $082C
+Define LanguageName_Basque                     For $042D
+Define LanguageName_Belarussian                For $0423
+Define LanguageName_Bengali                    For $0445
+Define LanguageName_Bulgarian                  For $0402
+Define LanguageName_Burmese                    For $0455
+Define LanguageName_Catalan                    For $0403
+Define LanguageName_Chinese_Taiwan             For $0404
+Define LanguageName_Chinese_PRC                For $0804
+Define LanguageName_Chinese_Hong_Kong_SAR_PRC  For $0C04
+Define LanguageName_Chinese_Singapore          For $1004
+Define LanguageName_Chinese_Macau_SAR          For $1404
+Define LanguageName_Croatian                   For $041A
+Define LanguageName_Czech                      For $0405
+Define LanguageName_Danish                     For $0406
+Define LanguageName_Dutch_Netherlands          For $0413
+Define LanguageName_Dutch_Belgium              For $0813
+Define LanguageName_English_United_States      For $0409
+Define LanguageName_English_United_Kingdom     For $0809
+Define LanguageName_English_Australian         For $0C09
+Define LanguageName_English_Canadian           For $1009
+Define LanguageName_English_New_Zealand        For $1409
+Define LanguageName_English_Ireland            For $1809
+Define LanguageName_English_South_Africa       For $1C09
+Define LanguageName_English_Jamaica            For $2009
+Define LanguageName_English_Caribbean          For $2409
+Define LanguageName_English_Belize             For $2809
+Define LanguageName_English_Trinidad           For $2C09
+Define LanguageName_English_Zimbabwe           For $3009
+Define LanguageName_English_Philippines        For $3409
+Define LanguageName_Estonian                   For $0425
+Define LanguageName_Faeroese                   For $0438
+Define LanguageName_Farsi                      For $0429
+Define LanguageName_Finnish                    For $040B
+Define LanguageName_French_Standard            For $040C
+Define LanguageName_French_Belgian             For $080C
+Define LanguageName_French_Canadian            For $0C0C
+Define LanguageName_French_Switzerland         For $100C
+Define LanguageName_French_Luxembourg          For $140C
+Define LanguageName_French_Monaco              For $180C
+Define LanguageName_Georgian                   For $0437
+Define LanguageName_German_Standard            For $0407
+Define LanguageName_German_Switzerland         For $0807
+Define LanguageName_German_Austria             For $0C07
+Define LanguageName_German_Luxembourg          For $1007
+Define LanguageName_German_Liechtenstein       For $1407
+Define LanguageName_Greek                      For $0408
+Define LanguageName_Gujarati                   For $0447
+Define LanguageName_Hebrew                     For $040D
+Define LanguageName_Hindi                      For $0439
+Define LanguageName_Hungarian                  For $040E
+Define LanguageName_Icelandic                  For $040F
+Define LanguageName_Indonesian                 For $0421
+Define LanguageName_Italian_Standard           For $0410
+Define LanguageName_Italian_Switzerland        For $0810
+Define LanguageName_Japanese                   For $0411
+Define LanguageName_Kannada                    For $044B
+Define LanguageName_Kashmiri_India             For $0860
+Define LanguageName_Kazakh                     For $043F
+Define LanguageName_Konkani                    For $0457
+Define LanguageName_Korean                     For $0412
+Define LanguageName_Korean_Johab               For $0812
+Define LanguageName_Latvian                    For $0426
+Define LanguageName_Lithuanian                 For $0427
+Define LanguageName_Lithuanian_Classic         For $0827
+Define LanguageName_Macedonian                 For $042F
+Define LanguageName_Malay_Malaysian            For $043E
+Define LanguageName_Malay_Brunei_Darussalam    For $083E
+Define LanguageName_Malayalam                  For $044C
+Define LanguageName_Manipuri                   For $0458
+Define LanguageName_Marathi                    For $044E
+Define LanguageName_Nepali_India               For $0861
+Define LanguageName_Norwegian_Bokmal           For $0414
+Define LanguageName_Norwegian_Nynorsk          For $0814
+Define LanguageName_Oriya                      For $0448
+Define LanguageName_Polish                     For $0415
+Define LanguageName_Portuguese_Brazil          For $0416
+Define LanguageName_Portuguese_Standard        For $0816
+Define LanguageName_Punjabi                    For $0446
+Define LanguageName_Romanian                   For $0418
+Define LanguageName_Russian                    For $0419
+Define LanguageName_Sanskrit                   For $044F
+Define LanguageName_Serbian_Cyrillic           For $0C1A
+Define LanguageName_Serbian_Latin              For $081A
+Define LanguageName_Sindhi                     For $0459
+Define LanguageName_Slovak                     For $041B
+Define LanguageName_Slovenian                  For $0424
+Define LanguageName_Spanish_Traditional_Sort   For $040A
+Define LanguageName_Spanish_Mexican            For $080A
+Define LanguageName_Spanish_Modern_Sort        For $0C0A
+Define LanguageName_Spanish_Guatemala          For $100A
+Define LanguageName_Spanish_Costa_Rica         For $140A
+Define LanguageName_Spanish_Panama             For $180A
+Define LanguageName_Spanish_Dominican_Republic For $1C0A
+Define LanguageName_Spanish_Venezuela          For $200A
+Define LanguageName_Spanish_Colombia           For $240A
+Define LanguageName_Spanish_Peru               For $280A
+Define LanguageName_Spanish_Argentina          For $2C0A
+Define LanguageName_Spanish_Ecuador            For $300A
+Define LanguageName_Spanish_Chile              For $340A
+Define LanguageName_Spanish_Uruguay            For $380A
+Define LanguageName_Spanish_Paraguay           For $3C0A
+Define LanguageName_Spanish_Bolivia            For $400A
+Define LanguageName_Spanish_El_Salvador        For $440A
+Define LanguageName_Spanish_Honduras           For $480A
+Define LanguageName_Spanish_Nicaragua          For $4C0A
+Define LanguageName_Spanish_Puerto_Rico        For $500A
+Define LanguageName_Sutu                       For $0430
+Define LanguageName_Swahili_Kenya              For $0441
+Define LanguageName_Swedish                    For $041D
+Define LanguageName_Swedish_Finland            For $081D
+Define LanguageName_Tamil                      For $0449
+Define LanguageName_Tatar_Tatarstan            For $0444
+Define LanguageName_Telugu                     For $044A
+Define LanguageName_Thai                       For $041E
+Define LanguageName_Turkish                    For $041F
+Define LanguageName_Ukrainian                  For $0422
+Define LanguageName_Urdu_Pakistan              For $0420
+Define LanguageName_Urdu_India                 For $0820
+Define LanguageName_Uzbek_Latin                For $0443
+Define LanguageName_Uzbek_Cyrillic             For $0843
+Define LanguageName_Vietnamese                 For $042A
+
+Function LanguageId2Name Desktop Integer iLanguageId Returns String
+    Case Begin
+        Case (iLanguageId = LanguageName_Language_Neutral)
+            Function_Return C_$LangnameLanguageNeutral
+        Case (iLanguageId = LanguageName_Invariant)
+            Function_Return C_$LangnameTheLanguageForTheInVariantLocale
+        Case (iLanguageId = LanguageName_User_Default_Language)
+            Function_Return C_$LangnameProcessorUserDefaultLanguage
+        Case (iLanguageId = LanguageName_System_Default_Language)
+            Function_Return C_$LangnameSystemDefaultLanguage
+        Case (iLanguageId = LanguageName_Afrikaans)
+            Function_Return C_$LangnameAfrikaans
+        Case (iLanguageId = LanguageName_Albanian)
+            Function_Return C_$LangnameAlbanian
+        Case (iLanguageId = LanguageName_Arabic_Saudi_Arabia)
+            Function_Return C_$LangnameArabicSaudiArabia
+        Case (iLanguageId = LanguageName_Arabic_Iraq)
+            Function_Return C_$LangnameArabicIraq
+        Case (iLanguageId = LanguageName_Arabic_Egypt)
+            Function_Return C_$LangnameArabicEgypt
+        Case (iLanguageId = LanguageName_Arabic_Libya)
+            Function_Return C_$LangnameArabicLibya
+        Case (iLanguageId = LanguageName_Arabic_Algeria)
+            Function_Return C_$LangnameArabicAlgeria
+        Case (iLanguageId = LanguageName_Arabic_Morocco)
+            Function_Return C_$LangnameArabicMorocco
+        Case (iLanguageId = LanguageName_Arabic_Tunisia)
+            Function_Return C_$LangnameArabicTunisia
+        Case (iLanguageId = LanguageName_Arabic_Oman)
+            Function_Return C_$LangnameArabicOman
+        Case (iLanguageId = LanguageName_Arabic_Yemen)
+            Function_Return C_$LangnameArabicYemen
+        Case (iLanguageId = LanguageName_Arabic_Syria)
+            Function_Return C_$LangnameArabicSyria
+        Case (iLanguageId = LanguageName_Arabic_Jordan)
+            Function_Return C_$LangnameArabicJordan
+        Case (iLanguageId = LanguageName_Arabic_Lebanon)
+            Function_Return C_$LangnameArabicLebanon
+        Case (iLanguageId = LanguageName_Arabic_Kuwait)
+            Function_Return C_$LangnameArabicKuwait
+        Case (iLanguageId = LanguageName_Arabic_U.A.E.)
+            Function_Return C_$LangnameArabicUAE
+        Case (iLanguageId = LanguageName_Arabic_Bahrain)
+            Function_Return C_$LangnameArabicBahrain
+        Case (iLanguageId = LanguageName_Arabic_Qatar)
+            Function_Return C_$LangnameArabicQatar
+        Case (iLanguageId = LanguageName_Armenian)
+            Function_Return C_$LangnameArmenian
+        Case (iLanguageId = LanguageName_Assamese)
+            Function_Return C_$LangnameAssamese
+        Case (iLanguageId = LanguageName_Azeri_Latin)
+            Function_Return C_$LangnameAzeriLatin
+        Case (iLanguageId = LanguageName_Azeri_Cyrillic)
+            Function_Return C_$LangnameAzeriCyrillic
+        Case (iLanguageId = LanguageName_Basque)
+            Function_Return C_$LangnameBasque
+        Case (iLanguageId = LanguageName_Belarussian)
+            Function_Return C_$LangnameBelarussian
+        Case (iLanguageId = LanguageName_Bengali)
+            Function_Return C_$LangnameBengali
+        Case (iLanguageId = LanguageName_Bulgarian)
+            Function_Return C_$LangnameBulgarian
+        Case (iLanguageId = LanguageName_Burmese)
+            Function_Return C_$LangnameBurmese
+        Case (iLanguageId = LanguageName_Catalan)
+            Function_Return C_$LangnameCatalan
+        Case (iLanguageId = LanguageName_Chinese_Taiwan)
+            Function_Return C_$LangnameChineseTaiwan
+        Case (iLanguageId = LanguageName_Chinese_PRC)
+            Function_Return C_$LangnameChinesePRC
+        Case (iLanguageId = LanguageName_Chinese_Hong_Kong_SAR_PRC)
+            Function_Return C_$LangnameChineseHongKongSARPRC
+        Case (iLanguageId = LanguageName_Chinese_Singapore)
+            Function_Return C_$LangnameChineseSingapore
+        Case (iLanguageId = LanguageName_Chinese_Macau_SAR)
+            Function_Return C_$LangnameChineseMacauSAR
+        Case (iLanguageId = LanguageName_Croatian)
+            Function_Return C_$LangnameCroatian
+        Case (iLanguageId = LanguageName_Czech)
+            Function_Return C_$LangnameCzech
+        Case (iLanguageId = LanguageName_Danish)
+            Function_Return C_$LangnameDanish
+        Case (iLanguageId = LanguageName_Dutch_Netherlands)
+            Function_Return C_$LangnameDutchNetherlands
+        Case (iLanguageId = LanguageName_Dutch_Belgium)
+            Function_Return C_$LangnameDutchBelgium
+        Case (iLanguageId = LanguageName_English_United_States)
+            Function_Return C_$LangnameEnglishUnitedStates
+        Case (iLanguageId = LanguageName_English_United_Kingdom)
+            Function_Return C_$LangnameEnglishUnitedKingdom
+        Case (iLanguageId = LanguageName_English_Australian)
+            Function_Return C_$LangnameEnglishAustralian
+        Case (iLanguageId = LanguageName_English_Canadian)
+            Function_Return C_$LangnameEnglishCanadian
+        Case (iLanguageId = LanguageName_English_New_Zealand)
+            Function_Return C_$LangnameEnglishNewZealand
+        Case (iLanguageId = LanguageName_English_Ireland)
+            Function_Return C_$LangnameEnglishIreland
+        Case (iLanguageId = LanguageName_English_South_Africa)
+            Function_Return C_$LangnameEnglishSouthAfrica
+        Case (iLanguageId = LanguageName_English_Jamaica)
+            Function_Return C_$LangnameEnglishJamaica
+        Case (iLanguageId = LanguageName_English_Caribbean)
+            Function_Return C_$LangnameEnglishCaribbean
+        Case (iLanguageId = LanguageName_English_Belize)
+            Function_Return C_$LangnameEnglishBelize
+        Case (iLanguageId = LanguageName_English_Trinidad)
+            Function_Return C_$LangnameEnglishTrinidad
+        Case (iLanguageId = LanguageName_English_Zimbabwe)
+            Function_Return C_$LangnameEnglishZimbabwe
+        Case (iLanguageId = LanguageName_English_Philippines)
+            Function_Return C_$LangnameEnglishPhilippines
+        Case (iLanguageId = LanguageName_Estonian)
+            Function_Return C_$LangnameEstonian
+        Case (iLanguageId = LanguageName_Faeroese)
+            Function_Return C_$LangnameFaeroese
+        Case (iLanguageId = LanguageName_Farsi)
+            Function_Return C_$LangnameFarsi
+        Case (iLanguageId = LanguageName_Finnish)
+            Function_Return C_$LangnameFinnish
+        Case (iLanguageId = LanguageName_French_Standard)
+            Function_Return C_$LangnameFrenchStandard
+        Case (iLanguageId = LanguageName_French_Belgian)
+            Function_Return C_$LangnameFrenchBelgian
+        Case (iLanguageId = LanguageName_French_Canadian)
+            Function_Return C_$LangnameFrenchCanadian
+        Case (iLanguageId = LanguageName_French_Switzerland)
+            Function_Return C_$LangnameFrenchSwitzerland
+        Case (iLanguageId = LanguageName_French_Luxembourg)
+            Function_Return C_$LangnameFrenchLuxembourg
+        Case (iLanguageId = LanguageName_French_Monaco)
+            Function_Return C_$LangnameFrenchMonaco
+        Case (iLanguageId = LanguageName_Georgian)
+            Function_Return C_$LangnameGeorgian
+        Case (iLanguageId = LanguageName_German_Standard)
+            Function_Return C_$LangnameGermanStandard
+        Case (iLanguageId = LanguageName_German_Switzerland)
+            Function_Return C_$LangnameGermanSwitzerland
+        Case (iLanguageId = LanguageName_German_Austria)
+            Function_Return C_$LangnameGermanAustria
+        Case (iLanguageId = LanguageName_German_Luxembourg)
+            Function_Return C_$LangnameGermanLuxembourg
+        Case (iLanguageId = LanguageName_German_Liechtenstein)
+            Function_Return C_$LangnameGermanLiechtenstein
+        Case (iLanguageId = LanguageName_Greek)
+            Function_Return C_$LangnameGreek
+        Case (iLanguageId = LanguageName_Gujarati)
+            Function_Return C_$LangnameGujarati
+        Case (iLanguageId = LanguageName_Hebrew)
+            Function_Return C_$LangnameHebrew
+        Case (iLanguageId = LanguageName_Hindi)
+            Function_Return C_$LangnameHindi
+        Case (iLanguageId = LanguageName_Hungarian)
+            Function_Return C_$LangnameHungarian
+        Case (iLanguageId = LanguageName_Icelandic)
+            Function_Return C_$LangnameIcelandic
+        Case (iLanguageId = LanguageName_Indonesian)
+            Function_Return C_$LangnameIndonesian
+        Case (iLanguageId = LanguageName_Italian_Standard)
+            Function_Return C_$LangnameItalianStandard
+        Case (iLanguageId = LanguageName_Italian_Switzerland)
+            Function_Return C_$LangnameItalianSwitzerland
+        Case (iLanguageId = LanguageName_Japanese)
+            Function_Return C_$LangnameJapanese
+        Case (iLanguageId = LanguageName_Kannada)
+            Function_Return C_$LangnameKannada
+        Case (iLanguageId = LanguageName_Kashmiri_India)
+            Function_Return C_$LangnameKashmiriIndia
+        Case (iLanguageId = LanguageName_Kazakh)
+            Function_Return C_$LangnameKazakh
+        Case (iLanguageId = LanguageName_Konkani)
+            Function_Return C_$LangnameKonkani
+        Case (iLanguageId = LanguageName_Korean)
+            Function_Return C_$LangnameKorean
+        Case (iLanguageId = LanguageName_Korean_Johab)
+            Function_Return C_$LangnameKoreanJohab
+        Case (iLanguageId = LanguageName_Latvian)
+            Function_Return C_$LangnameLatvian
+        Case (iLanguageId = LanguageName_Lithuanian)
+            Function_Return C_$LangnameLithuanian
+        Case (iLanguageId = LanguageName_Lithuanian_Classic)
+            Function_Return C_$LangnameLithuanianClassic
+        Case (iLanguageId = LanguageName_Macedonian)
+            Function_Return C_$LangnameMacedonian
+        Case (iLanguageId = LanguageName_Malay_Malaysian)
+            Function_Return C_$LangnameMalayMalaysian
+        Case (iLanguageId = LanguageName_Malay_Brunei_Darussalam)
+            Function_Return C_$LangnameMalayBruneiDarussalam
+        Case (iLanguageId = LanguageName_Malayalam)
+            Function_Return C_$LangnameMalayalam
+        Case (iLanguageId = LanguageName_Manipuri)
+            Function_Return C_$LangnameManipuri
+        Case (iLanguageId = LanguageName_Marathi)
+            Function_Return C_$LangnameMarathi
+        Case (iLanguageId = LanguageName_Nepali_India)
+            Function_Return C_$LangnameNepaliIndia
+        Case (iLanguageId = LanguageName_Norwegian_Bokmal)
+            Function_Return C_$LangnameNorwegianBokmal
+        Case (iLanguageId = LanguageName_Norwegian_Nynorsk)
+            Function_Return C_$LangnameNorwegianNynorsk
+        Case (iLanguageId = LanguageName_Oriya)
+            Function_Return C_$LangnameOriya
+        Case (iLanguageId = LanguageName_Polish)
+            Function_Return C_$LangnamePolish
+        Case (iLanguageId = LanguageName_Portuguese_Brazil)
+            Function_Return C_$LangnamePortugueseBrazil
+        Case (iLanguageId = LanguageName_Portuguese_Standard)
+            Function_Return C_$LangnamePortugueseStandard
+        Case (iLanguageId = LanguageName_Punjabi)
+            Function_Return C_$LangnamePunjabi
+        Case (iLanguageId = LanguageName_Romanian)
+            Function_Return C_$LangnameRomanian
+        Case (iLanguageId = LanguageName_Russian)
+            Function_Return C_$LangnameRussian
+        Case (iLanguageId = LanguageName_Sanskrit)
+            Function_Return C_$LangnameSanskrit
+        Case (iLanguageId = LanguageName_Serbian_Cyrillic)
+            Function_Return C_$LangnameSerbianCyrillic
+        Case (iLanguageId = LanguageName_Serbian_Latin)
+            Function_Return C_$LangnameSerbianLatin
+        Case (iLanguageId = LanguageName_Sindhi)
+            Function_Return C_$LangnameSindhi
+        Case (iLanguageId = LanguageName_Slovak)
+            Function_Return C_$LangnameSlovak
+        Case (iLanguageId = LanguageName_Slovenian)
+            Function_Return C_$LangnameSlovenian
+        Case (iLanguageId = LanguageName_Spanish_Traditional_Sort)
+            Function_Return C_$LangnameSpanishTraditionalSort
+        Case (iLanguageId = LanguageName_Spanish_Mexican)
+            Function_Return C_$LangnameSpanishMexican
+        Case (iLanguageId = LanguageName_Spanish_Modern_Sort)
+            Function_Return C_$LangnameSpanishModernSort
+        Case (iLanguageId = LanguageName_Spanish_Guatemala)
+            Function_Return C_$LangnameSpanishGuatemala
+        Case (iLanguageId = LanguageName_Spanish_Costa_Rica)
+            Function_Return C_$LangnameSpanishCostaRica
+        Case (iLanguageId = LanguageName_Spanish_Panama)
+            Function_Return C_$LangnameSpanishPanama
+        Case (iLanguageId = LanguageName_Spanish_Dominican_Republic)
+            Function_Return C_$LangnameSpanishDominicanRepublic
+        Case (iLanguageId = LanguageName_Spanish_Venezuela)
+            Function_Return C_$LangnameSpanishVenezuela
+        Case (iLanguageId = LanguageName_Spanish_Colombia)
+            Function_Return C_$LangnameSpanishColombia
+        Case (iLanguageId = LanguageName_Spanish_Peru)
+            Function_Return C_$LangnameSpanishPeru
+        Case (iLanguageId = LanguageName_Spanish_Argentina)
+            Function_Return C_$LangnameSpanishArgentina
+        Case (iLanguageId = LanguageName_Spanish_Ecuador)
+            Function_Return C_$LangnameSpanishEcuador
+        Case (iLanguageId = LanguageName_Spanish_Chile)
+            Function_Return C_$LangnameSpanishChile
+        Case (iLanguageId = LanguageName_Spanish_Uruguay)
+            Function_Return C_$LangnameSpanishUruguay
+        Case (iLanguageId = LanguageName_Spanish_Paraguay)
+            Function_Return C_$LangnameSpanishParaguay
+        Case (iLanguageId = LanguageName_Spanish_Bolivia)
+            Function_Return C_$LangnameSpanishBolivia
+        Case (iLanguageId = LanguageName_Spanish_El_Salvador)
+            Function_Return C_$LangnameSpanishElSalvador
+        Case (iLanguageId = LanguageName_Spanish_Honduras)
+            Function_Return C_$LangnameSpanishHonduras
+        Case (iLanguageId = LanguageName_Spanish_Nicaragua)
+            Function_Return C_$LangnameSpanishNicaragua
+        Case (iLanguageId = LanguageName_Spanish_Puerto_Rico)
+            Function_Return C_$LangnameSpanishPuertoRico
+        Case (iLanguageId = LanguageName_Sutu)
+            Function_Return C_$LangnameSutu
+        Case (iLanguageId = LanguageName_Swahili_Kenya)
+            Function_Return C_$LangnameSwahiliKenya
+        Case (iLanguageId = LanguageName_Swedish)
+            Function_Return C_$LangnameSwedish
+        Case (iLanguageId = LanguageName_Swedish_Finland)
+            Function_Return C_$LangnameSwedishFinland
+        Case (iLanguageId = LanguageName_Tamil)
+            Function_Return C_$LangnameTamil
+        Case (iLanguageId = LanguageName_Tatar_Tatarstan)
+            Function_Return C_$LangnameTatarTatarstan
+        Case (iLanguageId = LanguageName_Telugu)
+            Function_Return C_$LangnameTelugu
+        Case (iLanguageId = LanguageName_Thai)
+            Function_Return C_$LangnameThai
+        Case (iLanguageId = LanguageName_Turkish)
+            Function_Return C_$LangnameTurkish
+        Case (iLanguageId = LanguageName_Ukrainian)
+            Function_Return C_$LangnameUkrainian
+        Case (iLanguageId = LanguageName_Urdu_Pakistan)
+            Function_Return C_$LangnameUrduPakistan
+        Case (iLanguageId = LanguageName_Urdu_India)
+            Function_Return C_$LangnameUrduIndia
+        Case (iLanguageId = LanguageName_Uzbek_Latin)
+            Function_Return C_$LangnameUzbekLatin
+        Case (iLanguageId = LanguageName_Uzbek_Cyrillic)
+            Function_Return C_$LangnameUzbekCyrillic
+        Case (iLanguageId = LanguageName_Vietnamese)
+            Function_Return C_$LangnameVietnamese
+        Case Else
+            Function_Return C_$LangnameUnknownlanguageIdentifier
+    Case End
+End_Function
+
+External_Function WinAPI_GetUserDefaultLangID "GetUserDefaultLangID" Kernel32.Dll Returns Integer
+
+Function GetUserDefaultLangID Desktop Returns Integer
+    Integer iLanguageId
+    
+    Move (WinAPI_GetUserDefaultLangID ()) To iLanguageId
+    
+    Function_Return iLanguageId
+End_Function

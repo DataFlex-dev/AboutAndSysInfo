@@ -1,0 +1,32 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      GetKeyboardLayoutName.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function GetKeyboardLayoutName.
+//
+// Author:
+//      Vincent Oorsprong
+//
+// Date:
+//      2001, May, 26th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Define KL_NAMELENGTH For 9
+
+External_Function WinAPI_GetKeyboardLayoutName "GetKeyboardLayoutNameW" User32.Dll Pointer pwszKLID Returns Integer
+
+Function GetKeyboardLayoutName Desktop Returns String
+    WString wsKeyBoardLayoutName
+    Integer iVoid
+    
+    Move (ZeroString (KL_NAMELENGTH)) to wsKeyBoardLayoutName
+    Move (WinAPI_GetKeyboardLayoutName (AddressOf (wsKeyBoardLayoutName))) to iVoid
+    
+    Function_Return (Cstring (wsKeyBoardLayoutName))
+End_Function

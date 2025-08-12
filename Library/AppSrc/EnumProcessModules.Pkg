@@ -1,0 +1,84 @@
+﻿//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// Confidential Trade Secret.
+// Copyright 1987-2022 Data Access Corporation, Miami FL, USA
+// All Rights reserved
+// DataFlex is a registered trademark of Data Access Corporation.
+//
+// Module:
+//      EnumProcessModules.Pkg
+//
+// Purpose:
+//      Defines interface to WinAPI function EnumProcessModules.
+//
+// Author:
+//      Ulbe Stellema, Vincent Oorsprong
+//
+// Date:
+//      2002, June, 29th
+//
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Use GetCurrentProcessId.Pkg
+Use OpenProcess.Pkg
+Use CloseHandle.Pkg
+
+External_Function WinAPI_EnumProcessModules "EnumProcessModules" Psapi.Dll Handle hProcess Pointer lphModule Integer cb Pointer lpcbNeeded Returns Integer
+
+// Create an object of this class to enumerate the process modules and
+// retrieve the names from the array
+Class cProcessModulesArray is a cObject
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        
+        Property String[] psModuleNames
+    End_Procedure
+    
+    // The public message to run the enumeration
+    Procedure DoEnumProcessModules
+        DWord dwProcessId
+        Handle hProcess
+        Handle[] hModules
+        Integer iSize iVoid iModules iModule iLength iOldDelegationMode
+        Boolean bOk
+        WString wsModuleName
+        String[] sModuleNames
+    
+        // Remove all previous enumerated process modules if they exist
+        Set psModuleNames to sModuleNames
+    
+        Get Delegation_Mode To iOldDelegationMode
+        Set Delegation_Mode To Delegate_To_Parent
+    
+        Get GetApplicationCurrentProcessId to dwProcessId
+        If (dwProcessId <> 0) Begin
+            Get OpenProcess (PROCESS_VM_READ + PROCESS_QUERY_INFORMATION) dwProcessId To hProcess
+            If (hProcess <> 0) Begin
+                Move 0 to iSize
+                Move (WinAPI_EnumProcessModules (hProcess, AddressOf (hModules), 0, AddressOf (iSize))) to bOk
+                If (Not (bOk)) Begin
+                    Get ShowLastError To iVoid
+                End
+                Else Begin
+                    Move (iSize / SizeOfType (Handle)) to iModules
+                    Move (ResizeArray (hModules, iModules)) to hModules
+                    Move (WinAPI_EnumProcessModules (hProcess, AddressOf (hModules), iSize, AddressOf (iSize))) to bOk
+                    If (not (bOk)) Begin
+                        Get ShowLastError to iVoid
+                    End
+                    Else Begin
+                        Move (ResizeArray (sModuleNames, iModules, Repeat (Character (0), MAX_PATH))) to sModuleNames
+                        Decrement iModules
+                        For iModule from 0 to iModules
+                            Move (Repeat (Character (0), MAX_PATH)) to wsModuleName
+                            Move (GetModuleFileNameW (hModules[iModule], AddressOf (wsModuleName), MAX_PATH)) to iLength
+                            Move (CString (wsModuleName)) to sModuleNames[iModule]
+                        Loop
+                    End
+                End
+                Get CloseHandle hProcess To bOk
+            End
+        End
+        
+        Set psModuleNames to sModuleNames    
+        Set Delegation_Mode To iOldDelegationMode
+    End_Procedure
+End_Class
