@@ -2,7 +2,7 @@
 
 The AboutAndSysInfo library enhances your project About dialog enabling you to add a dialog that contains the project name, which comes from your application object, the version information from the executable and a very much extended and organized system information dialog. A user can pretty much find all system information related to the application in a treeview style view.
 
-###### How to use? 
+#### How to use it? 
 
 Simply add the library to your workspace and add the about.dg to the project code and the rest is handled for you.
 
